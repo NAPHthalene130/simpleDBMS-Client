@@ -14,7 +14,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CLIENT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-set(CLIENT_VCPKG_TARGETS)
+find_package(asio CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+set(CLIENT_VCPKG_TARGETS
+    asio::asio
+    nlohmann_json::nlohmann_json
+)
 
 file(GLOB_RECURSE CLIENT_SOURCE_FILES CONFIGURE_DEPENDS
     "${CLIENT_SOURCE_DIR}/*.cpp"

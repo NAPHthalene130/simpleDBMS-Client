@@ -123,6 +123,9 @@ void User::setAge(int newAge) {
 - 优先使用**接口/抽象类**实现依赖倒置，减少具体类之间的耦合
 - 避免循环依赖，可通过中间层或依赖注入解决
 
+### 5.4 方法参数传入
+- 方法参数应采用 **引用传递**（`const std::string& userName`），避免复制大对象
+- 对于可选参数，使用 **默认值**（`int age = 0`），避免调用者忘记传递参数
 
 ## 6. 头文件规范
 ### 6.1 头文件保护
@@ -161,3 +164,11 @@ void User::setAge(int newAge) {
       }
   };
   ```
+## 8. 控制台输出
+- 所有输出均采用 **英文**
+- 避免使用中文输出
+- 控制台输出日志应该满足以下格式:
+    - 时间戳（YYYY-MM-DD HH:MM:SS）
+    - 日志级别（DEBUG, INFO, WARNING, ERROR, FATAL）
+    - 日志消息（详细描述事件或错误信息）
+    - 例如：`[2023-10-01 12:00:00][DEBUG] UserManager::addUser("ZhangSan")`
