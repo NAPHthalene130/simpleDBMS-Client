@@ -5,12 +5,12 @@
 class MainWindow;
 
 /**
- * @class AuthWidget
- * @brief 身份验证页面类
- * @details 负责处理用户登录、注册等验证逻辑
+ * @class OpePanelWidget
+ * @brief 操作面板页面类
+ * @details 用户登录后的主操作界面，包含目录树、编辑器、终端、数据表等子面板
  * @author NAPH130
  */
-class AuthWidget : public QWidget
+class OpePanelWidget : public QWidget
 {
     Q_OBJECT
 
@@ -21,7 +21,7 @@ public:
      * @param mainWindow 主窗口指针，用于后续页面跳转或操作
      * @param parent 父部件指针
      */
-    explicit AuthWidget(MainWindow *mainWindow, QWidget *parent = nullptr);
+    explicit OpePanelWidget(MainWindow *mainWindow, QWidget *parent = nullptr);
 
 private:
     MainWindow *mainWindow; // 主窗口引用

@@ -1,14 +1,14 @@
-#include "SettingWidget.h"
+#include "OpePanelWidget.h"
 
 #include <QLabel>
 #include <QVBoxLayout>
 
-SettingWidget::SettingWidget(MainWindow *mainWindow, QWidget *parent)
+OpePanelWidget::OpePanelWidget(MainWindow *mainWindow, QWidget *parent)
     : QWidget(parent),
       mainWindow(mainWindow)
 {
     auto *layout = new QVBoxLayout(this);
-    auto *titleLabel = new QLabel(tr("SettingWidget"), this);
+    auto *titleLabel = new QLabel(tr("OpePanelWidget"), this);
 
     titleLabel->setAlignment(Qt::AlignCenter);
 

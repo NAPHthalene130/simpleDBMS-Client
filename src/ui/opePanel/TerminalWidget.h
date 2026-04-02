@@ -5,12 +5,12 @@
 class MainWindow;
 
 /**
- * @class AuthWidget
- * @brief 身份验证页面类
- * @details 负责处理用户登录、注册等验证逻辑
+ * @class TerminalWidget
+ * @brief 终端输出组件类
+ * @details 用于展示执行日志、错误信息等终端输出
  * @author NAPH130
  */
-class AuthWidget : public QWidget
+class TerminalWidget : public QWidget
 {
     Q_OBJECT
 
@@ -21,7 +21,7 @@ public:
      * @param mainWindow 主窗口指针，用于后续页面跳转或操作
      * @param parent 父部件指针
      */
-    explicit AuthWidget(MainWindow *mainWindow, QWidget *parent = nullptr);
+    explicit TerminalWidget(MainWindow *mainWindow, QWidget *parent = nullptr);
 
 private:
     MainWindow *mainWindow; // 主窗口引用

@@ -1,14 +1,14 @@
-#include "SettingWidget.h"
+#include "DirectoryWidget.h"
 
 #include <QLabel>
 #include <QVBoxLayout>
 
-SettingWidget::SettingWidget(MainWindow *mainWindow, QWidget *parent)
+DirectoryWidget::DirectoryWidget(MainWindow *mainWindow, QWidget *parent)
     : QWidget(parent),
       mainWindow(mainWindow)
 {
     auto *layout = new QVBoxLayout(this);
-    auto *titleLabel = new QLabel(tr("SettingWidget"), this);
+    auto *titleLabel = new QLabel(tr("DirectoryWidget"), this);
 
     titleLabel->setAlignment(Qt::AlignCenter);
 
