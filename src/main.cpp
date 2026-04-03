@@ -1,7 +1,10 @@
 #include "mainwindow.h"
+#include "network/NetReceiver.h"
+#include "network/NetSender.h"
 
 #include <QApplication>
 #include <QLocale>
+#include <QObject>
 #include <QTranslator>
 
 int main(int argc, char *argv[])
@@ -17,7 +20,21 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
     MainWindow w;
+    NetReceiver netReceiver(&w);
+    NetSender netSender(&w);
+
+    netReceiver.start();
+    netSender.start();
+
+    QObject::connect(&a,
+                     &QApplication::aboutToQuit,
+                     [&netReceiver, &netSender]() {
+                         netReceiver.stop();
+                         netSender.stop();
+                     });
+
     w.show();
     return a.exec();
 }
