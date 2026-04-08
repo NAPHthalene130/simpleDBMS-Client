@@ -16,3 +16,8 @@ EditorWidget::EditorWidget(MainWindow *mainWindow, QWidget *parent)
     layout->addWidget(titleLabel);
     layout->addStretch();
 }
+
+MainWindow *EditorWidget::getMainWindow() const
+{
+    return mainWindow;
+}

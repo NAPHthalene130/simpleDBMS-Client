@@ -16,3 +16,8 @@ TableWidget::TableWidget(MainWindow *mainWindow, QWidget *parent)
     layout->addWidget(titleLabel);
     layout->addStretch();
 }
+
+MainWindow *TableWidget::getMainWindow() const
+{
+    return mainWindow;
+}

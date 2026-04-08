@@ -16,3 +16,8 @@ SettingWidget::SettingWidget(MainWindow *mainWindow, QWidget *parent)
     layout->addWidget(titleLabel);
     layout->addStretch();
 }
+
+MainWindow *SettingWidget::getMainWindow() const
+{
+    return mainWindow;
+}

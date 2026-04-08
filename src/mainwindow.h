@@ -3,7 +3,9 @@
 #include <QMainWindow>
 
 class AuthWidget;
+class OpePanelWidget;
 class QStackedWidget;
+class SettingWidget;
 class QWidget;
 
 /**
@@ -37,7 +39,30 @@ public:
      */
     void switchWidget(QWidget *widget);
 
+    /**
+     * @brief 获取身份验证页面
+     * @author NAPH130
+     * @return 身份验证页面指针
+     */
+    AuthWidget *getAuthWidget() const;
+
+    /**
+     * @brief 获取操作面板页面
+     * @author NAPH130
+     * @return 操作面板页面指针
+     */
+    OpePanelWidget *getOpePanelWidget() const;
+
+    /**
+     * @brief 获取设置页面
+     * @author NAPH130
+     * @return 设置页面指针
+     */
+    SettingWidget *getSettingWidget() const;
+
 private:
-    QStackedWidget *stackedWidget; // 堆叠布局，用于页面切换
-    AuthWidget *authWidget;        // 身份验证页面
+    QStackedWidget *stackedWidget;
+    AuthWidget *authWidget;
+    OpePanelWidget *opePanelWidget;
+    SettingWidget *settingWidget;
 };

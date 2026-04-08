@@ -23,6 +23,13 @@ public:
      */
     explicit TerminalWidget(MainWindow *mainWindow, QWidget *parent = nullptr);
 
+    /**
+     * @brief 获取主窗口指针
+     * @author NAPH130
+     * @return 主窗口指针
+     */
+    MainWindow *getMainWindow() const;
+
 private:
     MainWindow *mainWindow; // 主窗口引用
 };

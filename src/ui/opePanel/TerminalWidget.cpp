@@ -16,3 +16,8 @@ TerminalWidget::TerminalWidget(MainWindow *mainWindow, QWidget *parent)
     layout->addWidget(titleLabel);
     layout->addStretch();
 }
+
+MainWindow *TerminalWidget::getMainWindow() const
+{
+    return mainWindow;
+}

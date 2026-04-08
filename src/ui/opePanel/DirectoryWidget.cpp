@@ -16,3 +16,8 @@ DirectoryWidget::DirectoryWidget(MainWindow *mainWindow, QWidget *parent)
     layout->addWidget(titleLabel);
     layout->addStretch();
 }
+
+MainWindow *DirectoryWidget::getMainWindow() const
+{
+    return mainWindow;
+}

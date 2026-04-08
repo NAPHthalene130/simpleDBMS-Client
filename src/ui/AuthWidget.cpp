@@ -16,3 +16,8 @@ AuthWidget::AuthWidget(MainWindow *mainWindow, QWidget *parent)
     layout->addWidget(titleLabel);
     layout->addStretch();
 }
+
+MainWindow *AuthWidget::getMainWindow() const
+{
+    return mainWindow;
+}
