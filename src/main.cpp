@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "debug/DebugWindow.h"
 #include "network/NetReceiver.h"
 #include "network/NetSender.h"
 
@@ -22,6 +23,7 @@ int main(int argc, char *argv[])
     }
 
     MainWindow w;
+    DebugWindow debugWindow(&w);
     NetReceiver netReceiver(&w);
     NetSender netSender(&w);
 
@@ -36,5 +38,6 @@ int main(int argc, char *argv[])
                      });
 
     w.show();
+    debugWindow.show();
     return a.exec();
 }
