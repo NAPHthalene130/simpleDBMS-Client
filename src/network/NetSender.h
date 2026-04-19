@@ -1,25 +1,23 @@
 #pragma once
 
-#include <atomic>
-#include <condition_variable>
-#include <mutex>
-#include <queue>
+#include <array>
+#include <cstdint>
+#include <memory>
 #include <string>
-#include <thread>
+
+#include <asio/ip/tcp.hpp>
 
 class MainWindow;
 
 /**
  * @class NetSender
  * @brief 客户端网络发送服务类
- * @details 负责在独立线程中处理待发送消息队列，并向目标地址建立短连接发送数据
+ * @details 负责向服务端套接字发送长度前缀协议消息。
  * @author NAPH130
  */
 class NetSender
 {
 public:
-    static constexpr unsigned short DEFAULT_TARGET_PORT = 10086;
-
     /**
      * @brief 构造函数
      * @author NAPH130
@@ -34,61 +32,21 @@ public:
     ~NetSender();
 
     /**
-     * @brief 启动发送服务
-     * @author NAPH130
-     */
-    void start();
-
-    /**
-     * @brief 停止发送服务
-     * @author NAPH130
-     */
-    void stop();
-
-    /**
      * @brief 发送一条字符串消息
      * @author NAPH130
-     * @param str 待发送的字符串内容
+     * @param serverSocket 服务端套接字
+     * @param msg 待发送的字符串内容
      */
-    void send(const std::string &str);
-
-    /**
-     * @brief 提交一条待发送消息
-     * @author NAPH130
-     * @param message 待发送消息
-     * @param targetAddress 目标地址
-     * @param targetPort 目标端口
-     */
-    void sendMessage(const std::string &message,
-                     const std::string &targetAddress = "127.0.0.1",
-                     unsigned short targetPort = DEFAULT_TARGET_PORT);
+    void send(std::shared_ptr<asio::ip::tcp::socket> serverSocket, const std::string &msg);
 
 private:
     /**
-     * @brief 发送线程主循环
+     * @brief 构建 4 字节长度前缀
      * @author NAPH130
+     * @param messageLength 消息长度
+     * @return 长度前缀字节数组
      */
-    void processQueue();
-
-    /**
-     * @brief 真正执行网络发送
-     * @author NAPH130
-     * @param message 待发送消息
-     * @param targetAddress 目标地址
-     * @param targetPort 目标端口
-     */
-    void sendNow(const std::string &message, const std::string &targetAddress, unsigned short targetPort);
-
-    struct PendingMessage {
-        std::string message;
-        std::string targetAddress;
-        unsigned short targetPort;
-    };
+    std::array<unsigned char, 4> buildLengthHeader(std::uint32_t messageLength) const;
 
     MainWindow *mainWindow;
-    std::atomic<bool> isRunning;
-    std::thread serviceThread;
-    std::mutex queueMutex;
-    std::condition_variable conditionVariable;
-    std::queue<PendingMessage> pendingMessages;
 };

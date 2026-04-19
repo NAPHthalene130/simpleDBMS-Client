@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <string>
 
@@ -24,6 +24,21 @@ public:
      * @param content 数据内容
      */
     NetData(const std::string &type, const std::string &content);
+
+    /**
+     * @brief 将当前对象序列化为 JSON 字符串
+     * @author NAPH130
+     * @return JSON 格式字符串
+     */
+    std::string toJson() const;
+
+    /**
+     * @brief 从 JSON 字符串反序列化对象
+     * @author NAPH130
+     * @param jsonStr JSON 格式字符串
+     * @return 反序列化后的网络数据对象
+     */
+    static NetData fromJson(const std::string &jsonStr);
 
     /**
      * @brief 获取数据类型

@@ -1,35 +1,32 @@
 #pragma once
 
+#include <array>
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
 
-#include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
-#include <asio/thread_pool.hpp>
 
 class MainWindow;
 
 /**
  * @class NetReceiver
  * @brief 客户端网络接收服务类
- * @details 负责在独立线程中持续监听 10086 端口，并将连接处理任务分发到并发工作线程池
+ * @details 负责从客户端维护的单个服务端套接字中按“4 字节长度 + 消息体”的协议读取消息。
  * @author NAPH130
  */
 class NetReceiver
 {
 public:
-    static constexpr unsigned short DEFAULT_LISTEN_PORT = 10086;
-
     /**
      * @brief 构造函数
      * @author NAPH130
      * @param mainWindow 主窗口指针，用于后续与界面层联动
-     * @param listenPort 监听端口
      */
-    explicit NetReceiver(MainWindow *mainWindow, unsigned short listenPort = DEFAULT_LISTEN_PORT);
+    explicit NetReceiver(MainWindow *mainWindow);
 
     /**
      * @brief 析构函数
@@ -52,9 +49,9 @@ public:
     /**
      * @brief 处理最终接收到的完整消息
      * @author NAPH130
-     * @param receiverStr 最终处理后的接收字符串
+     * @param msg 最终处理后的接收字符串
      */
-    void receiveProcess(const std::string &receiverStr);
+    void processMsg(const std::string &msg);
 
     /**
      * @brief 获取最近一次处理的消息内容
@@ -65,30 +62,28 @@ public:
 
 private:
     /**
-     * @brief 执行监听服务主循环
+     * @brief 执行接收服务主循环
      * @author NAPH130
      */
     void runService();
 
     /**
-     * @brief 持续接受客户端连接
+     * @brief 处理与服务端的单个会话
      * @author NAPH130
+     * @param serverSocket 服务端套接字
      */
-    void acceptLoop();
+    void handleServerSession(std::shared_ptr<asio::ip::tcp::socket> serverSocket);
 
     /**
-     * @brief 处理单个客户端会话
+     * @brief 解析 4 字节长度前缀
      * @author NAPH130
-     * @param clientSocket 客户端套接字
+     * @param lengthHeader 长度前缀字节数组
+     * @return 消息体长度
      */
-    void handleClientSession(std::shared_ptr<asio::ip::tcp::socket> clientSocket);
+    std::uint32_t parseLengthHeader(const std::array<unsigned char, 4> &lengthHeader) const;
 
     MainWindow *mainWindow;
-    unsigned short listenPort;
     std::atomic<bool> isRunning;
-    std::unique_ptr<asio::io_context> ioContext;
-    std::unique_ptr<asio::ip::tcp::acceptor> acceptor;
-    std::unique_ptr<asio::thread_pool> workerPool;
     std::thread serviceThread;
     mutable std::mutex messageMutex;
     std::string lastReceivedMessage;

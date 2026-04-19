@@ -1,18 +1,17 @@
 #include "NetReceiver.h"
 
-#include <algorithm>
 #include <array>
-#include <iostream>
-#include <system_error>
 
+#include <asio/read.hpp>
 #include <QMetaObject>
 #include <QString>
 
 #include "mainwindow.h"
+#include "NetworkManager.h"
+#include "models/network/NetData.h"
 
-NetReceiver::NetReceiver(MainWindow *mainWindow, unsigned short listenPort)
+NetReceiver::NetReceiver(MainWindow *mainWindow)
     : mainWindow(mainWindow),
-      listenPort(listenPort),
       isRunning(false)
 {
 }
@@ -37,37 +36,36 @@ void NetReceiver::stop()
         return;
     }
 
-    if (acceptor != nullptr) {
-        std::error_code errorCode;
-        acceptor->close(errorCode);
-    }
-
-    if (ioContext != nullptr) {
-        ioContext->stop();
+    if (mainWindow != nullptr) {
+        NetworkManager *networkManager = mainWindow->getNetworkManager();
+        std::shared_ptr<asio::ip::tcp::socket> serverSocket =
+            networkManager != nullptr ? networkManager->getSocket() : nullptr;
+        if (serverSocket != nullptr && serverSocket->is_open()) {
+            std::error_code errorCode;
+            serverSocket->shutdown(asio::ip::tcp::socket::shutdown_both, errorCode);
+        }
     }
 
     if (serviceThread.joinable()) {
         serviceThread.join();
     }
-
-    if (workerPool != nullptr) {
-        workerPool->join();
-        workerPool.reset();
-    }
-
-    acceptor.reset();
-    ioContext.reset();
 }
 
-void NetReceiver::receiveProcess(const std::string &receiverStr)
+void NetReceiver::processMsg(const std::string &msg)
 {
     {
         std::lock_guard<std::mutex> lock(messageMutex);
-        lastReceivedMessage = receiverStr;
+        lastReceivedMessage = msg;
+    }
+
+    QString messageText = QString::fromStdString(msg);
+    try {
+        const NetData netData = NetData::fromJson(msg);
+        messageText = QString::fromStdString(netData.getContent());
+    } catch (const std::exception &) {
     }
 
     if (mainWindow != nullptr) {
-        const QString messageText = QString::fromStdString(receiverStr);
         QMetaObject::invokeMethod(mainWindow,
                                   [window = mainWindow, messageText]() {
                                       window->setProperty("lastReceivedMessage", messageText);
@@ -84,68 +82,64 @@ std::string NetReceiver::getLastReceivedMessage() const
 
 void NetReceiver::runService()
 {
-    try {
-        ioContext = std::make_unique<asio::io_context>();
-
-        const std::size_t workerCount = std::max<std::size_t>(2, std::thread::hardware_concurrency());
-        workerPool = std::make_unique<asio::thread_pool>(workerCount);
-
-        asio::ip::tcp::endpoint endpoint(asio::ip::tcp::v4(), listenPort);
-        acceptor = std::make_unique<asio::ip::tcp::acceptor>(*ioContext);
-        acceptor->open(endpoint.protocol());
-        acceptor->set_option(asio::ip::tcp::acceptor::reuse_address(true));
-        acceptor->bind(endpoint);
-        acceptor->listen(asio::socket_base::max_listen_connections);
-
-        acceptLoop();
-    } catch (const std::exception &exception) {
-        receiveProcess("客户端接收服务异常: " + std::string(exception.what()));
+    if (mainWindow == nullptr) {
+        return;
     }
+
+    NetworkManager *networkManager = mainWindow->getNetworkManager();
+    if (networkManager == nullptr) {
+        return;
+    }
+
+    handleServerSession(networkManager->getSocket());
 }
 
-void NetReceiver::acceptLoop()
+void NetReceiver::handleServerSession(std::shared_ptr<asio::ip::tcp::socket> serverSocket)
 {
-    while (isRunning.load()) {
-        auto clientSocket = std::make_shared<asio::ip::tcp::socket>(*ioContext);
-        std::error_code errorCode;
-        acceptor->accept(*clientSocket, errorCode);
-
-        if (errorCode) {
-            if (isRunning.load()) {
-                receiveProcess("客户端接收连接失败: " + errorCode.message());
-            }
-            continue;
-        }
-
-        asio::post(*workerPool,
-                   [this, clientSocket]() {
-                       handleClientSession(clientSocket);
-                   });
+    if (serverSocket == nullptr || !serverSocket->is_open()) {
+        return;
     }
-}
-
-void NetReceiver::handleClientSession(std::shared_ptr<asio::ip::tcp::socket> clientSocket)
-{
-    std::array<char, 4096> buffer{};
-    std::string receiverStr;
 
     while (isRunning.load()) {
         std::error_code errorCode;
-        const std::size_t readSize = clientSocket->read_some(asio::buffer(buffer), errorCode);
+        std::array<unsigned char, 4> lengthHeader{};
+        asio::read(*serverSocket, asio::buffer(lengthHeader), errorCode);
 
         if (errorCode == asio::error::eof) {
             break;
         }
 
         if (errorCode) {
-            receiveProcess("客户端会话读取失败: " + errorCode.message());
-            return;
+            break;
         }
 
-        receiverStr.append(buffer.data(), readSize);
+        const std::uint32_t messageLength = parseLengthHeader(lengthHeader);
+        std::string msg(messageLength, '\0');
+        asio::read(*serverSocket, asio::buffer(msg.data(), msg.size()), errorCode);
+
+        if (errorCode == asio::error::eof) {
+            break;
+        }
+
+        if (errorCode) {
+            break;
+        }
+
+        processMsg(msg);
     }
 
-    if (!receiverStr.empty()) {
-        receiveProcess(receiverStr);
+    if (mainWindow != nullptr) {
+        NetworkManager *networkManager = mainWindow->getNetworkManager();
+        if (networkManager != nullptr) {
+            networkManager->disconnected(serverSocket);
+        }
     }
+}
+
+std::uint32_t NetReceiver::parseLengthHeader(const std::array<unsigned char, 4> &lengthHeader) const
+{
+    return (static_cast<std::uint32_t>(lengthHeader[0]) << 24U)
+           | (static_cast<std::uint32_t>(lengthHeader[1]) << 16U)
+           | (static_cast<std::uint32_t>(lengthHeader[2]) << 8U)
+           | static_cast<std::uint32_t>(lengthHeader[3]);
 }

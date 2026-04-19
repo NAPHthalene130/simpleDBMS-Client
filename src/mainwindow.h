@@ -3,6 +3,7 @@
 #include <QMainWindow>
 
 class AuthWidget;
+class NetworkManager;
 class OpePanelWidget;
 class QStackedWidget;
 class SettingWidget;
@@ -60,9 +61,17 @@ public:
      */
     SettingWidget *getSettingWidget() const;
 
+    /**
+     * @brief 获取网络管理器
+     * @author NAPH130
+     * @return 网络管理器指针
+     */
+    NetworkManager *getNetworkManager();
+
 private:
     QStackedWidget *stackedWidget;
     AuthWidget *authWidget;
     OpePanelWidget *opePanelWidget;
     SettingWidget *settingWidget;
+    NetworkManager *networkManager;
 };

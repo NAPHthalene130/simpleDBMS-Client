@@ -2,6 +2,7 @@
 
 #include <QStackedWidget>
 
+#include "network/NetworkManager.h"
 #include "ui/AuthWidget.h"
 #include "ui/OpePanelWidget.h"
 #include "ui/SettingWidget.h"
@@ -11,14 +12,19 @@ MainWindow::MainWindow(QWidget *parent)
       stackedWidget(new QStackedWidget(this)),
       authWidget(new AuthWidget(this)),
       opePanelWidget(new OpePanelWidget(this)),
-      settingWidget(new SettingWidget(this))
+      settingWidget(new SettingWidget(this)),
+      networkManager(new NetworkManager(this))
 {
     resize(1200, 800);
     setCentralWidget(stackedWidget);
     switchWidget(authWidget);
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow()
+{
+    delete networkManager;
+    networkManager = nullptr;
+}
 
 AuthWidget *MainWindow::getAuthWidget() const
 {
@@ -33,6 +39,11 @@ OpePanelWidget *MainWindow::getOpePanelWidget() const
 SettingWidget *MainWindow::getSettingWidget() const
 {
     return settingWidget;
+}
+
+NetworkManager *MainWindow::getNetworkManager()
+{
+    return networkManager;
 }
 
 void MainWindow::switchWidget(QWidget *widget)
