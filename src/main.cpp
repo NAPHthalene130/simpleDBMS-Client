@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "debug/DebugWindow.h"
-#include "network/NetReceiver.h"
-#include "network/NetSender.h"
+#include "network/NetworkManager.h"
 
 #include <QApplication>
 #include <QLocale>
@@ -24,17 +23,17 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     DebugWindow debugWindow(&w);
-    NetReceiver netReceiver(&w);
-    NetSender netSender(&w);
-
-    netReceiver.start();
-    netSender.start();
+    NetworkManager *networkManager = w.getNetworkManager();
+    if (networkManager != nullptr) {
+        networkManager->start();
+    }
 
     QObject::connect(&a,
                      &QApplication::aboutToQuit,
-                     [&netReceiver, &netSender]() {
-                         netReceiver.stop();
-                         netSender.stop();
+                     [networkManager]() {
+                         if (networkManager != nullptr) {
+                             networkManager->stop();
+                         }
                      });
 
     w.show();

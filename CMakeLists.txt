@@ -41,6 +41,14 @@ target_include_directories(simpleDBMS-Client
         ${CLIENT_SOURCE_DIR}
 )
 
+if(WIN32)
+    target_compile_definitions(simpleDBMS-Client
+        PRIVATE
+            _WIN32_WINNT=0x0A00
+            WINVER=0x0A00
+    )
+endif()
+
 target_link_libraries(simpleDBMS-Client
     PRIVATE
         Qt::Core
