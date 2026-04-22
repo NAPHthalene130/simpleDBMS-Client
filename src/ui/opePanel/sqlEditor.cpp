@@ -138,7 +138,11 @@ void SqlEditor::setupCompleter()
     
     // SQL 语句关键字
     sqlKeywords << "SELECT" << "FROM" << "WHERE" << "INSERT" << "UPDATE" << "DELETE"
-                << "CREATE" << "DROP" << "ALTER" << "TABLE" << "INTO" << "VALUES"
+                << "CREATE" << "DROP"
+                // 2026-04-22 修改：补充 SHOW 自动补全候选词，作者：YuzhSong。
+                // 说明：沿用现有关键字列表驱动补全机制，确保输入 sh / sho / show 时可正常提示 SHOW。
+                << "SHOW"
+                << "ALTER" << "TABLE" << "INTO" << "VALUES"
                 << "SET" << "AND" << "OR" << "NOT" << "NULL" << "IS"
                 << "JOIN" << "LEFT" << "RIGHT" << "INNER" << "OUTER" << "ON"
                 << "GROUP" << "BY" << "ORDER" << "HAVING" << "LIMIT" << "OFFSET"

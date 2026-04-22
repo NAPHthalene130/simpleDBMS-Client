@@ -60,6 +60,9 @@ void SqlHighlighter::setupHighlightingRules()
                     << "\\bDELETE\\b"
                     << "\\bCREATE\\b"
                     << "\\bDROP\\b"
+                    // 2026-04-22 修改：补充 SHOW 关键字高亮规则，作者：YuzhSong。
+                    // 说明：沿用既有关键字规则构建方式，不引入特殊分支，保持模块职责稳定。
+                    << "\\bSHOW\\b"
                     << "\\bALTER\\b"
                     << "\\bTABLE\\b"
                     << "\\bINTO\\b"
