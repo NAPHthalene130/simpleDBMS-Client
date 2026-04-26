@@ -1,5 +1,5 @@
 /**
- * @file lineNumberArea.cpp
+ * @file LineNumberArea.cpp
  * @brief 行号显示区域组件实现文件
  * @details LineNumberArea 是轻量转发层，实际绘制逻辑由 SqlEditor 完成。
  *          这是因为访问 QPlainTextEdit 的 protected 成员需要继承关系。
@@ -7,8 +7,8 @@
  * @date 2026-04-11
  */
 
-#include "lineNumberArea.h"
-#include "sqlEditor.h"
+#include "LineNumberArea.h"
+#include "SqlEditor.h"
 
 #include <QPainter>
 

@@ -10,7 +10,7 @@
 
 #include "EditorWidget.h"
 #include "mainwindow.h"
-#include "sqlEditor.h"
+#include "SqlEditor.h"
 
 #include <QDateTime>
 #include <QDebug>
