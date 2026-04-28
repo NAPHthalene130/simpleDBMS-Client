@@ -11,7 +11,7 @@ class QStackedWidget;
  * @class DebugWindow
  * @brief 调试窗口类
  * @details 上方为功能选择区域，下方为调试功能页面区域
- * @author NAPH130
+ * @author NAPH1301
  */
 class DebugWindow : public QWidget
 {
@@ -20,7 +20,7 @@ class DebugWindow : public QWidget
 public:
     /**
      * @brief 构造函数
-     * @author NAPH130
+     * @author NAPH1301
      * @param mainWindow 主窗口指针
      * @param parent 父部件指针
      */
@@ -28,14 +28,14 @@ public:
 
     /**
      * @brief 切换调试功能页面
-     * @author NAPH130
+     * @author NAPH1301
      * @param widget 目标调试页面
      */
     void switchWidget(QWidget *widget);
 
     /**
      * @brief 获取主窗口指针
-     * @author NAPH130
+     * @author NAPH1301
      * @return 主窗口指针
      */
     MainWindow *getMainWindow() const;

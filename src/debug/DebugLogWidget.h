@@ -8,7 +8,7 @@ class MainWindow;
  * @class DebugLogWidget
  * @brief 调试日志页面
  * @details 用于展示调试日志信息，当前仅提供页面骨架
- * @author NAPH130
+ * @author NAPH1301
  */
 class DebugLogWidget : public QWidget
 {
@@ -17,7 +17,7 @@ class DebugLogWidget : public QWidget
 public:
     /**
      * @brief 构造函数
-     * @author NAPH130
+     * @author NAPH1301
      * @param mainWindow 主窗口指针
      * @param parent 父部件指针
      */
@@ -25,7 +25,7 @@ public:
 
     /**
      * @brief 获取主窗口指针
-     * @author NAPH130
+     * @author NAPH1301
      * @return 主窗口指针
      */
     MainWindow *getMainWindow() const;

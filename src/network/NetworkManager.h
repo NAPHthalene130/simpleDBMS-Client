@@ -15,7 +15,7 @@ class MainWindow;
  * @class NetworkManager
  * @brief 客户端网络管理器
  * @details 统一管理客户端套接字、接收器与发送器，作为客户端网络模块的中控入口。
- * @author NAPH130
+ * @author NAPH1301
  */
 class NetworkManager
 {
@@ -24,20 +24,20 @@ public:
 
     /**
      * @brief 构造函数
-     * @author NAPH130
+     * @author NAPH1301
      * @param mainWindow 主窗口对象
      */
     explicit NetworkManager(MainWindow *mainWindow);
 
     /**
      * @brief 析构函数
-     * @author NAPH130
+     * @author NAPH1301
      */
     ~NetworkManager();
 
     /**
      * @brief 启动网络模块
-     * @author NAPH130
+     * @author NAPH1301
      * @param serverAddress 服务端地址
      * @param serverPort 服务端端口
      * @return 是否启动成功
@@ -46,13 +46,13 @@ public:
 
     /**
      * @brief 停止网络模块
-     * @author NAPH130
+     * @author NAPH1301
      */
     void stop();
 
     /**
      * @brief 连接到服务端
-     * @author NAPH130
+     * @author NAPH1301
      * @param serverAddress 服务端地址
      * @param serverPort 服务端端口
      * @return 是否连接成功
@@ -61,28 +61,28 @@ public:
 
     /**
      * @brief 处理连接断开事件
-     * @author NAPH130
+     * @author NAPH1301
      * @param serverSocket 丢失连接的套接字
      */
     void disconnected(std::shared_ptr<asio::ip::tcp::socket> serverSocket);
 
     /**
      * @brief 获取网络接收器
-     * @author NAPH130
+     * @author NAPH1301
      * @return 网络接收器指针
      */
     NetReceiver *getNetReceiver();
 
     /**
      * @brief 获取网络发送器
-     * @author NAPH130
+     * @author NAPH1301
      * @return 网络发送器指针
      */
     NetSender *getNetSender();
 
     /**
      * @brief 获取当前服务端套接字
-     * @author NAPH130
+     * @author NAPH1301
      * @return 当前服务端套接字
      */
     std::shared_ptr<asio::ip::tcp::socket> getSocket() const;

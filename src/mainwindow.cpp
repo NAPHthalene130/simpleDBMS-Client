@@ -15,8 +15,11 @@ MainWindow::MainWindow(QWidget *parent)
       settingWidget(new SettingWidget(this)),
       networkManager(new NetworkManager(this))
 {
+    // 初始化主窗口大小，满足项目要求的默认显示尺寸。
     resize(1200, 800);
     setCentralWidget(stackedWidget);
+
+    // 启动后优先展示身份验证页面，作为应用入口页面。
     switchWidget(authWidget);
 }
 

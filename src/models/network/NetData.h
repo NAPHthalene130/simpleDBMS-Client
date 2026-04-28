@@ -6,20 +6,20 @@
  * @class NetData
  * @brief 网络传输数据类
  * @details 封装网络层传输过程中使用的数据类型与数据内容。
- * @author NAPH130
+ * @author NAPH1301
  */
 class NetData
 {
 public:
     /**
      * @brief 默认构造函数
-     * @author NAPH130
+     * @author NAPH1301
      */
     NetData();
 
     /**
      * @brief 带参构造函数
-     * @author NAPH130
+     * @author NAPH1301
      * @param type 数据类型
      * @param content 数据内容
      */
@@ -27,14 +27,14 @@ public:
 
     /**
      * @brief 将当前对象序列化为 JSON 字符串
-     * @author NAPH130
+     * @author NAPH1301
      * @return JSON 格式字符串
      */
     std::string toJson() const;
 
     /**
      * @brief 从 JSON 字符串反序列化对象
-     * @author NAPH130
+     * @author NAPH1301
      * @param jsonStr JSON 格式字符串
      * @return 反序列化后的网络数据对象
      */
@@ -42,28 +42,28 @@ public:
 
     /**
      * @brief 获取数据类型
-     * @author NAPH130
+     * @author NAPH1301
      * @return 数据类型
      */
     const std::string &getType() const;
 
     /**
      * @brief 设置数据类型
-     * @author NAPH130
+     * @author NAPH1301
      * @param type 数据类型
      */
     void setType(const std::string &type);
 
     /**
      * @brief 获取数据内容
-     * @author NAPH130
+     * @author NAPH1301
      * @return 数据内容
      */
     const std::string &getContent() const;
 
     /**
      * @brief 设置数据内容
-     * @author NAPH130
+     * @author NAPH1301
      * @param content 数据内容
      */
     void setContent(const std::string &content);

@@ -28,13 +28,11 @@ int main(int argc, char *argv[])
     NetSender netSender(&w);
 
     netReceiver.start();
-    netSender.start();
 
     QObject::connect(&a,
                      &QApplication::aboutToQuit,
                      [&netReceiver, &netSender]() {
                          netReceiver.stop();
-                         netSender.stop();
                      });
 
     w.show();
