@@ -8,7 +8,22 @@
 
 #include "mainwindow.h"
 #include "NetworkManager.h"
-#include "models/network/NetData.h"
+#include "models/network/NetworkTransferData.h"
+
+namespace {
+QString buildDisplayMessage(const NetworkTransferData &networkTransferData)
+{
+    if (!networkTransferData.getMessage().empty()) {
+        return QString::fromStdString(networkTransferData.getMessage());
+    }
+
+    if (!networkTransferData.getSql().empty()) {
+        return QString::fromStdString(networkTransferData.getSql());
+    }
+
+    return QString::fromStdString(networkTransferData.toJson());
+}
+}
 
 NetReceiver::NetReceiver(MainWindow *mainWindow)
     : mainWindow(mainWindow),
@@ -51,19 +66,14 @@ void NetReceiver::stop()
     }
 }
 
-void NetReceiver::processMsg(const std::string &msg)
+void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
 {
     {
         std::lock_guard<std::mutex> lock(messageMutex);
-        lastReceivedMessage = msg;
+        lastReceivedMessage = networkTransferData.toJson();
     }
 
-    QString messageText = QString::fromStdString(msg);
-    try {
-        const NetData netData = NetData::fromJson(msg);
-        messageText = QString::fromStdString(netData.getContent());
-    } catch (const std::exception &) {
-    }
+    const QString messageText = buildDisplayMessage(networkTransferData);
 
     if (mainWindow != nullptr) {
         QMetaObject::invokeMethod(mainWindow,
@@ -125,7 +135,24 @@ void NetReceiver::handleServerSession(std::shared_ptr<asio::ip::tcp::socket> ser
             break;
         }
 
-        processMsg(msg);
+        try {
+            const NetworkTransferData networkTransferData = NetworkTransferData::fromJson(msg);
+            processMsg(networkTransferData);
+        } catch (const std::exception &) {
+            {
+                std::lock_guard<std::mutex> lock(messageMutex);
+                lastReceivedMessage = msg;
+            }
+
+            if (mainWindow != nullptr) {
+                const QString messageText = QString::fromStdString(msg);
+                QMetaObject::invokeMethod(mainWindow,
+                                          [window = mainWindow, messageText]() {
+                                              window->setProperty("lastReceivedMessage", messageText);
+                                          },
+                                          Qt::QueuedConnection);
+            }
+        }
     }
 
     if (mainWindow != nullptr) {

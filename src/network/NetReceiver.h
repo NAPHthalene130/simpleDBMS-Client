@@ -11,6 +11,7 @@
 #include <asio/ip/tcp.hpp>
 
 class MainWindow;
+class NetworkTransferData;
 
 /**
  * @class NetReceiver
@@ -49,9 +50,9 @@ public:
     /**
      * @brief 处理最终接收到的完整消息
      * @author NAPH130
-     * @param msg 最终处理后的接收字符串
+     * @param networkTransferData 最终处理后的网络传输数据
      */
-    void processMsg(const std::string &msg);
+    void processMsg(const NetworkTransferData &networkTransferData);
 
     /**
      * @brief 获取最近一次处理的消息内容
