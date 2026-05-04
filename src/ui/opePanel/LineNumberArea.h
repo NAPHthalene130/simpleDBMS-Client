@@ -1,5 +1,5 @@
 /**
- * @file lineNumberArea.h
+ * @file LineNumberArea.h
  * @brief 行号显示区域组件头文件
  * @details 为 SqlEditor 提供行号显示功能，集成到编辑器左侧。
  *          该类仅作为轻量转发层，实际绘制逻辑在 SqlEditor 中完成

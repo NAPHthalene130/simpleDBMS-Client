@@ -1,14 +1,14 @@
 /**
- * @file sqlEditor.cpp
+ * @file SqlEditor.cpp
  * @brief SQL 编辑器核心组件实现文件
  * @details 实现行号集成、当前行高亮和自动缩进功能。
  * @author YuzhSong
  * @date 2026-04-11
  */
 
-#include "sqlEditor.h"
-#include "lineNumberArea.h"
-#include "sqlHighlighter.h"
+#include "SqlEditor.h"
+#include "LineNumberArea.h"
+#include "SqlHighlighter.h"
 
 #include <QAbstractItemView>
 #include <QAbstractTextDocumentLayout>

@@ -1,12 +1,12 @@
 /**
- * @file sqlHighlighter.cpp
+ * @file SqlHighlighter.cpp
  * @brief SQL 语法高亮器实现文件
  * @details 实现 SQL 关键字、字符串、单行注释和多行注释的高亮逻辑。
  * @author YuzhSong
  * @date 2026-04-11
  */
 
-#include "sqlHighlighter.h"
+#include "SqlHighlighter.h"
 
 #include <QTextDocument>
 

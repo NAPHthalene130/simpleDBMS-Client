@@ -1,5 +1,5 @@
 /**
- * @file sqlHighlighter.h
+ * @file SqlHighlighter.h
  * @brief SQL 语法高亮器头文件
  * @details 继承 QSyntaxHighlighter，为 SQL 编辑器提供语法高亮功能。
  *          支持 SQL 关键字、字符串、单行注释和多行注释的高亮。

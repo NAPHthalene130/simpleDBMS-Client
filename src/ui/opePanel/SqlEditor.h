@@ -1,5 +1,5 @@
 /**
- * @file sqlEditor.h
+ * @file SqlEditor.h
  * @brief SQL 编辑器核心组件头文件
  * @details 继承 QPlainTextEdit，集成行号显示、当前行高亮、自动缩进和 SQL 自动补全功能。
  *          该类是编辑区的核心，负责处理编辑行为和视觉呈现。
