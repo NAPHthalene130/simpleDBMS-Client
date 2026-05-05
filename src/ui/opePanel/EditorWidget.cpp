@@ -11,6 +11,9 @@
 
 #include "SqlEditor.h"
 #include "mainwindow.h"
+#include "network/NetworkManager.h"
+#include "network/NetSender.h"
+#include "models/network/NetworkTransferData.h"
 
 #include <QDateTime>
 #include <QDebug>
@@ -308,7 +311,7 @@ bool EditorWidget::openFile()
     updateWindowTitle(QFileInfo(currentFilePath).fileName());
 
     // 打开成功后通知目录组件：
-    // 1) 将文件加入“已打开文件”
+    // 1) 将文件加入"已打开文件"
     // 2) 将其设置为当前选中项
     emit fileOpened(currentFilePath);
     emit currentFileChanged(currentFilePath);
@@ -367,7 +370,7 @@ bool EditorWidget::saveFileAs()
     currentFilePath = normalizedFilePath;
     updateWindowTitle(QFileInfo(currentFilePath).fileName());
 
-    // 另存为后的文件也应纳入“已打开文件”，并同步当前选中状态。
+    // 另存为后的文件也应纳入"已打开文件"，并同步当前选中状态。
     emit fileOpened(currentFilePath);
     emit currentFileChanged(currentFilePath);
     return true;
@@ -414,13 +417,47 @@ void EditorWidget::runCurrentSql()
 
 /**
  * @brief 执行 SQL 语句入口
- * @details 保持当前逻辑：仅执行当前编辑区文本内容。
+ * @details 通过 MainWindow → NetworkManager → NetSender 链式获取发送器，
+ *          将 SQL 封装为 NetworkTransferData 后通过 NetSender 发送至服务端。
  * @author YuzhSong
  * @param sql 要执行的 SQL 文本
  */
 void EditorWidget::executeSql(const QString& sql)
 {
-    qDebug() << QString("[%1][DEBUG] Execute SQL: %2")
+    if (mainWindow == nullptr) {
+        qWarning() << QString("[%1][ERROR] MainWindow is null, cannot send SQL.")
+                          .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+        return;
+    }
+
+    NetworkManager* networkManager = mainWindow->getNetworkManager();
+    if (networkManager == nullptr) {
+        qWarning() << QString("[%1][ERROR] NetworkManager is null, cannot send SQL.")
+                          .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+        return;
+    }
+
+    NetSender* netSender = networkManager->getNetSender();
+    if (netSender == nullptr) {
+        qWarning() << QString("[%1][ERROR] NetSender is null, cannot send SQL.")
+                          .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+        return;
+    }
+
+    std::shared_ptr<asio::ip::tcp::socket> socket = networkManager->getSocket();
+    if (socket == nullptr || !socket->is_open()) {
+        qWarning() << QString("[%1][ERROR] Socket is not connected, cannot send SQL.")
+                          .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+        return;
+    }
+
+    NetworkTransferData data;
+    data.setType(NetworkTransferData::SQL_EXEC_REQUEST);
+    data.setSql(sql.toStdString());
+
+    netSender->send(socket, data.toJson());
+
+    qDebug() << QString("[%1][DEBUG] SQL sent to server: %2")
                     .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"), sql);
 }
 
@@ -499,4 +536,3 @@ QString EditorWidget::normalizeFilePath(const QString& filePath) const
     }
     return QDir::cleanPath(QFileInfo(filePath).absoluteFilePath());
 }
-
