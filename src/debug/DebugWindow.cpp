@@ -42,6 +42,27 @@ DebugWindow::DebugWindow(MainWindow *mainWindow, QWidget *parent)
     connect(logPageButton, &QPushButton::clicked, this, [this]() {
         switchWidget(debugLogWidget);
     });
+
+    setStyleSheet(QString(
+        "QWidget {"
+        "    background-color: #1E1E1E;"
+        "    color: #D4D4D4;"
+        "}"
+        "QPushButton {"
+        "    background-color: #3C3C3C;"
+        "    color: #E0E0E0;"
+        "    border: 1px solid #555555;"
+        "    border-radius: 4px;"
+        "    padding: 6px 14px;"
+        "    font-size: 13px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #505050;"
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #404040;"
+        "}"
+    ));
 }
 
 void DebugWindow::switchWidget(QWidget *widget)

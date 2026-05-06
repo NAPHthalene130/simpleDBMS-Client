@@ -17,6 +17,13 @@ MainWindow::MainWindow(QWidget *parent)
 {
     resize(1200, 800);
     setCentralWidget(stackedWidget);
+
+    setStyleSheet(QString(
+        "QMainWindow {"
+        "    background-color: #1E1E1E;"
+        "}"
+    ));
+
     switchWidget(authWidget);
 }
 

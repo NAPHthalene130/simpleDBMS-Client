@@ -11,10 +11,18 @@ SettingWidget::SettingWidget(MainWindow *mainWindow, QWidget *parent)
     auto *titleLabel = new QLabel(tr("SettingWidget"), this);
 
     titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet("color: #CCCCCC; font-size: 16px;");
 
     layout->addStretch();
     layout->addWidget(titleLabel);
     layout->addStretch();
+
+    setStyleSheet(QString(
+        "QWidget {"
+        "    background-color: #1E1E1E;"
+        "    color: #D4D4D4;"
+        "}"
+    ));
 }
 
 MainWindow *SettingWidget::getMainWindow() const

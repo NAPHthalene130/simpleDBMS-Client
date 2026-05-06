@@ -11,6 +11,7 @@ DebugLogWidget::DebugLogWidget(MainWindow *mainWindow, QWidget *parent)
     auto *titleLabel = new QLabel(tr("DebugLogWidget"), this);
 
     titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet("color: #CCCCCC; font-size: 16px;");
     layout->addWidget(titleLabel);
 }
 

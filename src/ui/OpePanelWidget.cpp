@@ -50,7 +50,16 @@ OpePanelWidget::OpePanelWidget(MainWindow* mainWindow, QWidget* parent)
  */
 void OpePanelWidget::initUI()
 {
-    // 右侧区域继续保留“中央主区 + 终端”的既有结构，避免破坏已有行为。
+    setStyleSheet(QString(
+        "QWidget {"
+        "    background-color: #1E1E1E;"
+        "    color: #D4D4D4;"
+        "}"
+        "QSplitter::handle {"
+        "    background-color: #3E3E3E;"
+        "}"
+    ));
+
     auto* rightLayout = new QVBoxLayout(rightPanelWidget);
     rightLayout->setContentsMargins(0, 0, 0, 0);
     rightLayout->setSpacing(0);
