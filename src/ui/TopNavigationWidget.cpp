@@ -56,7 +56,9 @@ void TopNavigationWidget::initUI()
     setFixedHeight(52);
 
     auto *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(14, 10, 14, 10);
+    // 作者：YuzhSong
+    // 仅优化顶部导航的视觉留白与组件间距，不改变导航按钮业务交互。
+    layout->setContentsMargins(14, 8, 14, 8);
     layout->setSpacing(8);
 
     brandLabel->setObjectName("topNavBrandLabel");
@@ -91,43 +93,50 @@ void TopNavigationWidget::initConnections()
 
 void TopNavigationWidget::initStyle()
 {
+    // 作者：YuzhSong
+    // 统一顶部导航为深灰近黑风格，并通过低饱和高亮体现当前页面选中态。
     setStyleSheet(QString(
         "QWidget {"
-        "    background-color: #252526;"
-        "    color: #D4D4D4;"
+        "    background-color: #202124;"
+        "    color: #F0F0F0;"
         "    border: none;"
+        "    border-bottom: 1px solid #3A3D42;"
         "}"
         "QLabel#topNavBrandLabel {"
-        "    color: #EAEAEA;"
+        "    color: #F2F3F5;"
         "    font-size: 14px;"
         "    font-weight: 700;"
         "    letter-spacing: 0;"
         "}"
         "QPushButton#topNavWorkspaceButton, QPushButton#topNavSettingButton {"
-        "    background-color: #333337;"
-        "    color: #D9D9D9;"
-        "    border: 1px solid #444448;"
+        "    background-color: #2B2D30;"
+        "    color: #E6E6E6;"
+        "    border: 1px solid #3A3D42;"
         "    border-radius: 6px;"
         "    padding: 4px 14px;"
         "    font-size: 13px;"
         "}"
         "QPushButton#topNavWorkspaceButton:hover, QPushButton#topNavSettingButton:hover {"
-        "    background-color: #3D3D42;"
+        "    background-color: #34373C;"
         "}"
         "QPushButton#topNavWorkspaceButton[active=\"true\"], QPushButton#topNavSettingButton[active=\"true\"] {"
-        "    background-color: #0E639C;"
-        "    border: 1px solid #0E639C;"
+        "    background-color: #3D6FB6;"
+        "    border: 1px solid #4A83D6;"
         "    color: #FFFFFF;"
         "    font-weight: 600;"
         "}"
         "QLabel#topNavUserPrefixLabel {"
-        "    color: #9A9A9A;"
+        "    color: #A8A8A8;"
         "    font-size: 12px;"
         "}"
         "QLabel#topNavUserValueLabel {"
-        "    color: #E0E0E0;"
+        "    color: #F0F0F0;"
         "    font-size: 12px;"
         "    font-weight: 600;"
+        "    background-color: #2B2D30;"
+        "    border: 1px solid #3A3D42;"
+        "    border-radius: 6px;"
+        "    padding: 2px 8px;"
         "}"
     ));
 }

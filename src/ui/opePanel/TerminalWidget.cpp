@@ -16,6 +16,11 @@ TerminalWidget::TerminalWidget(MainWindow *mainWindow, QWidget *parent)
 {
     auto *layout = new QVBoxLayout(this);
     auto *inputLayout = new QHBoxLayout();
+    // 作者：YuzhSong
+    // 仅优化终端面板的边距与间距，不影响 SQL 提交与回显链路。
+    layout->setContentsMargins(6, 6, 6, 6);
+    layout->setSpacing(6);
+    inputLayout->setSpacing(6);
 
     outputTextEdit->setReadOnly(true);
     outputTextEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
@@ -79,28 +84,33 @@ void TerminalWidget::submitSql()
 
 void TerminalWidget::applyTerminalStyle()
 {
+    // 作者：YuzhSong
+    // 统一终端样式为深灰主题，并增强输入区、按钮和边框层次，不改动 submit/append 逻辑。
     setStyleSheet(
-        "QWidget { background-color: #1e1e1e; color: #d4d4d4; }"
+        "QWidget { background-color: #202124; color: #F0F0F0; border-radius: 8px; }"
         "QPlainTextEdit {"
-        "  background-color: #111111;"
-        "  color: #d4d4d4;"
-        "  border: 1px solid #3c3c3c;"
-        "  selection-background-color: #264f78;"
+        "  background-color: #1E1F22;"
+        "  color: #F0F0F0;"
+        "  border: 1px solid #3A3D42;"
+        "  border-radius: 6px;"
+        "  selection-background-color: #3D6FB6;"
         "}"
         "QLineEdit {"
-        "  background-color: #252526;"
-        "  color: #d4d4d4;"
-        "  border: 1px solid #3c3c3c;"
-        "  padding: 4px;"
+        "  background-color: #252629;"
+        "  color: #F0F0F0;"
+        "  border: 1px solid #3A3D42;"
+        "  border-radius: 6px;"
+        "  padding: 5px 8px;"
         "}"
         "QPushButton {"
-        "  background-color: #0e639c;"
+        "  background-color: #2B2D30;"
         "  color: #ffffff;"
-        "  border: 1px solid #1177bb;"
-        "  padding: 4px 12px;"
+        "  border: 1px solid #3A3D42;"
+        "  border-radius: 6px;"
+        "  padding: 5px 12px;"
         "}"
         "QPushButton:hover {"
-        "  background-color: #1177bb;"
+        "  background-color: #34373C;"
         "}"
     );
 }

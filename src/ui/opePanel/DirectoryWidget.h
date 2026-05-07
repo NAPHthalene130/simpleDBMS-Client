@@ -85,6 +85,13 @@ private:
     void initConnections();
 
     /**
+     * @brief 初始化样式
+     * @details 仅负责目录面板视觉风格设置，不影响文件列表信号槽与业务行为。
+     * @author YuzhSong
+     */
+    void initStyle();
+
+    /**
      * @brief 按路径查找列表项
      * @author YuzhSong
      * @param filePath 文件完整路径
@@ -114,4 +121,3 @@ private:
     MainWindow* mainWindow;       ///< 主窗口引用
     QListWidget* openedFileList;  ///< 已打开文件列表控件
 };
-

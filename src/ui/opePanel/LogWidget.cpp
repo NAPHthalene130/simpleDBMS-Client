@@ -37,6 +37,8 @@ void LogWidget::initUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(8, 8, 8, 8);
+    // 作者：YuzhSong
+    // 调整日志区内部间距，提升列表可读性与现代 IDE 的紧凑感平衡。
     mainLayout->setSpacing(6);
 
     titleLabel = new QLabel(tr("操作日志"), this);
@@ -53,24 +55,35 @@ void LogWidget::initUI()
  */
 void LogWidget::initStyle()
 {
+    // 作者：YuzhSong
+    // 日志面板统一深灰底色与边框，日志项增加轻微间距与选中反馈。
     setStyleSheet(
         "LogWidget {"
-        "    background-color: #252A31;"
+        "    background-color: #252629;"
+        "    border: 1px solid #3A3D42;"
         "    border-radius: 8px;"
         "}"
         "QLabel {"
-        "    color: #D8D8D8;"
+        "    color: #F0F0F0;"
         "    font-weight: 600;"
         "}"
         "QListWidget {"
-        "    background-color: #20242A;"
-        "    color: #D0D5DB;"
-        "    border: 1px solid #3A3F45;"
+        "    background-color: #202124;"
+        "    color: #F0F0F0;"
+        "    border: 1px solid #3A3D42;"
         "    border-radius: 6px;"
         "    outline: none;"
         "}"
         "QListWidget::item {"
-        "    padding: 6px 8px;"
+        "    padding: 7px 8px;"
+        "    margin: 1px 2px;"
+        "}"
+        "QListWidget::item:hover {"
+        "    background-color: #34373C;"
+        "}"
+        "QListWidget::item:selected {"
+        "    background-color: #4C5A7A;"
+        "    color: #FFFFFF;"
         "}"
     );
 }
@@ -90,4 +103,3 @@ void LogWidget::appendLog(const QString& message)
     logList->addItem(message);
     logList->scrollToBottom();
 }
-

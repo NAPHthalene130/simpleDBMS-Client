@@ -65,32 +65,34 @@ void SettingWidget::initConnections()
 
 void SettingWidget::initStyle()
 {
+    // 作者：YuzhSong
+    // 设置页采用统一深灰风格，突出标题层级与退出按钮反馈，不改动登出业务流程。
     setStyleSheet(QString(
         "QWidget {"
-        "    background-color: #1E1E1E;"
-        "    color: #D4D4D4;"
+        "    background-color: #1E1F22;"
+        "    color: #F0F0F0;"
         "}"
         "QLabel#settingTitleLabel {"
-        "    color: #E8E8E8;"
+        "    color: #F0F0F0;"
         "    font-size: 22px;"
-        "    font-weight: 600;"
+        "    font-weight: 700;"
         "}"
         "QLabel#settingDescriptionLabel {"
-        "    color: #AFAFAF;"
+        "    color: #A8A8A8;"
         "    font-size: 13px;"
         "}"
         "QPushButton#logoutButton {"
-        "    background-color: #2D2D30;"
-        "    color: #F2F2F2;"
-        "    border: 1px solid #C75050;"
+        "    background-color: #2B2D30;"
+        "    color: #F0F0F0;"
+        "    border: 1px solid #A14B4B;"
         "    border-radius: 6px;"
         "    padding: 6px 14px;"
         "}"
         "QPushButton#logoutButton:hover {"
-        "    background-color: #3A2A2A;"
+        "    background-color: #4A2E2E;"
         "}"
         "QPushButton#logoutButton:pressed {"
-        "    background-color: #4A2E2E;"
+        "    background-color: #5A3232;"
         "}"
     ));
 }

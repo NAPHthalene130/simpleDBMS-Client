@@ -36,8 +36,10 @@ void ActivityBarWidget::initUI()
     setFixedWidth(48);
 
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(6, 8, 6, 8);
-    mainLayout->setSpacing(8);
+    // 作者：YuzhSong
+    // 调整 ActivityBar 留白，增强与侧边面板和编辑区的视觉分层。
+    mainLayout->setContentsMargins(6, 6, 6, 6);
+    mainLayout->setSpacing(6);
 
     fileButton = new QPushButton(tr("F"), this);
     logButton = new QPushButton(tr("L"), this);
@@ -69,24 +71,28 @@ void ActivityBarWidget::initUI()
  */
 void ActivityBarWidget::initStyle()
 {
+    // 作者：YuzhSong
+    // 统一左侧活动栏为深灰底色，hover 轻微提亮，checked 使用低饱和蓝色高亮。
     setStyleSheet(
         "ActivityBarWidget {"
-        "    background-color: #1C1F24;"
+        "    background-color: #202124;"
+        "    border: 1px solid #3A3D42;"
+        "    border-radius: 8px;"
         "}"
         "QPushButton {"
         "    min-height: 30px;"
-        "    border: 1px solid #3A3F45;"
+        "    border: 1px solid #3A3D42;"
         "    border-radius: 6px;"
-        "    background-color: #2A2F36;"
-        "    color: #D0D5DB;"
+        "    background-color: #2B2D30;"
+        "    color: #F0F0F0;"
         "    font-weight: 600;"
         "}"
         "QPushButton:hover {"
-        "    background-color: #353C45;"
+        "    background-color: #34373C;"
         "}"
         "QPushButton:checked {"
-        "    background-color: #2F3D63;"
-        "    border: 1px solid #4F7BFF;"
+        "    background-color: #3D6FB6;"
+        "    border: 1px solid #4A83D6;"
         "    color: #FFFFFF;"
         "}"
     );
@@ -154,4 +160,3 @@ void ActivityBarWidget::updateSelectionState(bool fileActive, bool logActive, bo
     setAiChecked(aiActive);
     setTerminalChecked(terminalActive);
 }
-

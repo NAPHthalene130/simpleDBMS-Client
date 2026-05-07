@@ -85,8 +85,10 @@ void OpePanelWidget::initUI()
     rootVerticalSplitter->setSizes({900, 0});
 
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->setSpacing(0);
+    // 作者：YuzhSong
+    // 主工作区外围增加轻微留白，增强各面板分层；不改变 splitter 分配逻辑。
+    mainLayout->setContentsMargins(6, 6, 6, 6);
+    mainLayout->setSpacing(6);
     mainLayout->addWidget(rootVerticalSplitter, 1);
 
     // 默认右侧 AI 面板与底部 Terminal 都收起。
@@ -101,13 +103,19 @@ void OpePanelWidget::initUI()
  */
 void OpePanelWidget::initStyle()
 {
+    // 作者：YuzhSong
+    // 统一工作区底色与 splitter 把手样式，保持深灰主调与轻微赛博感细节。
     setStyleSheet(QString(
         "QWidget {"
-        "    background-color: #1E1E1E;"
-        "    color: #D4D4D4;"
+        "    background-color: #1E1F22;"
+        "    color: #F0F0F0;"
         "}"
         "QSplitter::handle {"
-        "    background-color: #3E3E3E;"
+        "    background-color: #3A3D42;"
+        "    border-radius: 2px;"
+        "}"
+        "QSplitter::handle:hover {"
+        "    background-color: #4A4E55;"
         "}"
     ));
 }

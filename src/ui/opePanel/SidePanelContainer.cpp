@@ -50,8 +50,10 @@ void SidePanelContainer::initUI()
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     auto* mainLayout = new QVBoxLayout(this);
+    // 作者：YuzhSong
+    // 左侧面板容器与外部区域保留小间距，贴近现代 IDE 视觉层次。
     mainLayout->setContentsMargins(6, 6, 6, 6);
-    mainLayout->setSpacing(0);
+    mainLayout->setSpacing(4);
 
     stackedWidget = new QStackedWidget(this);
     m_directoryWidget = new DirectoryWidget(mainWindow, this);
@@ -70,10 +72,12 @@ void SidePanelContainer::initUI()
  */
 void SidePanelContainer::initStyle()
 {
+    // 作者：YuzhSong
+    // SidePanel 统一深灰底与细边框，不改变 File/Log 切换逻辑。
     setStyleSheet(
         "SidePanelContainer {"
-        "    background-color: #252A31;"
-        "    border: 1px solid #383D44;"
+        "    background-color: #252629;"
+        "    border: 1px solid #3A3D42;"
         "    border-radius: 8px;"
         "}"
     );

@@ -35,7 +35,9 @@ AiPanelWidget::AiPanelWidget(QWidget* parent)
 void AiPanelWidget::initUI()
 {
     mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(14, 14, 14, 14);
+    // 作者：YuzhSong
+    // 控制 AI 面板内边距与间距，保证右侧面板与主编辑区视觉一致。
+    mainLayout->setContentsMargins(12, 12, 12, 12);
     mainLayout->setSpacing(10);
 
     titleLabel = new QLabel(tr("AI Assistant"), this);
@@ -61,20 +63,25 @@ void AiPanelWidget::initStyle()
 {
     setMinimumWidth(0);
     setMaximumWidth(QWIDGETSIZE_MAX);
+    // 作者：YuzhSong
+    // AI 面板采用深灰背景 + 次级说明文本 + 轻微赛博感高亮，不引入业务逻辑。
     setStyleSheet(
         "AiPanelWidget {"
-        "    background-color: #252A31;"
-        "    border: 1px solid #383D44;"
+        "    background-color: #252629;"
+        "    border: 1px solid #3A3D42;"
         "    border-radius: 8px;"
         "}"
         "QLabel {"
-        "    color: #D4D8DE;"
+        "    color: #A8A8A8;"
         "}"
         "QLabel:first-child {"
-        "    color: #F0F3F8;"
+        "    color: #E8ECF5;"
         "    font-size: 15px;"
         "    font-weight: 700;"
         "}"
+        "QLabel:nth-child(2) {"
+        "    color: #7FB2FF;"
+        "    font-weight: 600;"
+        "}"
     );
 }
-
