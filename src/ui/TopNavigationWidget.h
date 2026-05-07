@@ -80,7 +80,7 @@ private:
     void initUI();
     void initConnections();
     void initStyle();
-    void updateButtonState();
+    void updateTabStyle();
 
 private:
     PageType currentPageType;

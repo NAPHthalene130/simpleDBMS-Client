@@ -25,13 +25,13 @@ TopNavigationWidget::TopNavigationWidget(QWidget *parent)
     initUI();
     initStyle();
     initConnections();
-    updateButtonState();
+    updateTabStyle();
 }
 
 void TopNavigationWidget::setCurrentPage(PageType pageType)
 {
     currentPageType = pageType;
-    updateButtonState();
+    updateTabStyle();
 }
 
 void TopNavigationWidget::setUserName(const QString &userName)
@@ -66,12 +66,12 @@ void TopNavigationWidget::initUI()
     workspaceButton->setObjectName("topNavWorkspaceButton");
     workspaceButton->setProperty("active", false);
     workspaceButton->setCursor(Qt::PointingHandCursor);
-    workspaceButton->setFixedHeight(30);
+    workspaceButton->setFixedHeight(32);
 
     settingButton->setObjectName("topNavSettingButton");
     settingButton->setProperty("active", false);
     settingButton->setCursor(Qt::PointingHandCursor);
-    settingButton->setFixedHeight(30);
+    settingButton->setFixedHeight(32);
 
     userNamePrefixLabel->setObjectName("topNavUserPrefixLabel");
     userNameValueLabel->setObjectName("topNavUserValueLabel");
@@ -94,13 +94,12 @@ void TopNavigationWidget::initConnections()
 void TopNavigationWidget::initStyle()
 {
     // 作者：YuzhSong
-    // 统一顶部导航为深灰近黑风格，并通过低饱和高亮体现当前页面选中态。
+    // 将“工作区/设置”改为标签页视觉：激活态与下方内容区连接，未激活态保持暗色未选中外观。
     setStyleSheet(QString(
         "QWidget {"
-        "    background-color: #202124;"
+        "    background-color: #1F2023;"
         "    color: #F0F0F0;"
         "    border: none;"
-        "    border-bottom: 1px solid #3A3D42;"
         "}"
         "QLabel#topNavBrandLabel {"
         "    color: #F2F3F5;"
@@ -109,19 +108,24 @@ void TopNavigationWidget::initStyle()
         "    letter-spacing: 0;"
         "}"
         "QPushButton#topNavWorkspaceButton, QPushButton#topNavSettingButton {"
-        "    background-color: #2B2D30;"
-        "    color: #E6E6E6;"
+        "    background-color: #2A2C31;"
+        "    color: #C8CBD2;"
         "    border: 1px solid #3A3D42;"
-        "    border-radius: 6px;"
-        "    padding: 4px 14px;"
+        "    border-bottom-color: #3A3D42;"
+        "    border-top-left-radius: 8px;"
+        "    border-top-right-radius: 8px;"
+        "    border-bottom-left-radius: 0px;"
+        "    border-bottom-right-radius: 0px;"
+        "    padding: 5px 14px;"
         "    font-size: 13px;"
         "}"
         "QPushButton#topNavWorkspaceButton:hover, QPushButton#topNavSettingButton:hover {"
-        "    background-color: #34373C;"
+        "    background-color: #353942;"
         "}"
         "QPushButton#topNavWorkspaceButton[active=\"true\"], QPushButton#topNavSettingButton[active=\"true\"] {"
-        "    background-color: #3D6FB6;"
-        "    border: 1px solid #4A83D6;"
+        "    background-color: #252629;"
+        "    border: 1px solid #4A4E55;"
+        "    border-bottom-color: #252629;"
         "    color: #FFFFFF;"
         "    font-weight: 600;"
         "}"
@@ -141,7 +145,7 @@ void TopNavigationWidget::initStyle()
     ));
 }
 
-void TopNavigationWidget::updateButtonState()
+void TopNavigationWidget::updateTabStyle()
 {
     const bool workspaceActive = currentPageType == PageType::Workspace;
     const bool settingActive = currentPageType == PageType::Setting;

@@ -23,7 +23,7 @@
 #include <QFileInfo>
 #include <QKeySequence>
 #include <QMessageBox>
-#include <QPushButton>
+#include <QSizePolicy>
 #include <QShortcut>
 #include <QStringConverter>
 #include <QTextStream>
@@ -44,7 +44,6 @@ EditorWidget::EditorWidget(MainWindow* mainWindow, QWidget* parent)
     , btnOpen(nullptr)
     , btnSave(nullptr)
     , btnRun(nullptr)
-    , btnToggleDirectory(nullptr)
 {
     initUI();
     setupEditor();
@@ -127,16 +126,6 @@ void EditorWidget::initUI()
         "QToolBar QToolButton#btnRun:pressed {"
         "    background-color: #2F9E44;"
         "}"
-        "QToolBar QPushButton#btnToggleDirectory {"
-        "    background-color: #2B2D30;"
-        "    border: 1px solid #3A3D42;"
-        "    border-radius: 6px;"
-        "    padding: 4px 10px;"
-        "    color: #F0F0F0;"
-        "}"
-        "QToolBar QPushButton#btnToggleDirectory:hover {"
-        "    background-color: #34373C;"
-        "}"
         "QToolBar::separator {"
         "    width: 1px;"
         "    background-color: #3A3D42;"
@@ -160,11 +149,6 @@ void EditorWidget::initConnections()
     connect(btnOpen, &QToolButton::clicked, this, &EditorWidget::onOpenFile);
     connect(btnSave, &QToolButton::clicked, this, &EditorWidget::onSaveFile);
     connect(btnRun, &QToolButton::clicked, this, &EditorWidget::onRunSql);
-
-    // 该按钮只发请求，不直接操作目录组件或 splitter，避免跨组件强耦合。
-    connect(btnToggleDirectory, &QPushButton::clicked, this, [this]() {
-        emit toggleDirectoryRequested();
-    });
 
     auto* runShortcut = new QShortcut(QKeySequence("Ctrl+Return"), this);
     connect(runShortcut, &QShortcut::activated, this, &EditorWidget::onRunSql);
@@ -211,17 +195,16 @@ void EditorWidget::setupToolbar()
     btnRun->setText(tr("Run"));
     btnRun->setToolTip(tr("执行当前编辑区 SQL (Ctrl+Enter)"));
 
-    btnToggleDirectory = new QPushButton(this);
-    btnToggleDirectory->setObjectName("btnToggleDirectory");
-    btnToggleDirectory->setText(tr("侧栏"));
-    btnToggleDirectory->setToolTip(tr("展开/收起左侧目录面板"));
-
     toolbar->addWidget(btnNew);
     toolbar->addWidget(btnOpen);
     toolbar->addWidget(btnSave);
-    toolbar->addSeparator();
-    toolbar->addWidget(btnToggleDirectory);
-    toolbar->addSeparator();
+
+    // 作者：YuzhSong
+    // 在左侧文件操作按钮与右侧 Run 按钮之间加入弹性间隔，使 Run 固定靠右显示。
+    QWidget* stretchWidget = new QWidget(this);
+    stretchWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    toolbar->addWidget(stretchWidget);
+
     toolbar->addWidget(btnRun);
 }
 

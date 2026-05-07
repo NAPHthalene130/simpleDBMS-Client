@@ -220,7 +220,6 @@ private:
     QToolButton* btnOpen;              ///< 打开按钮
     QToolButton* btnSave;              ///< 保存按钮
     QToolButton* btnRun;               ///< 运行按钮
-    QPushButton* btnToggleDirectory;   ///< 侧边栏开关按钮（仅发信号，不直接控制布局）
     QString currentFilePath;           ///< 当前编辑文件完整路径
 };
 

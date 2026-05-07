@@ -2,7 +2,7 @@
  * @file OpePanelWidget.cpp
  * @author YuzhSong
  * @brief 操作工作区主容器实现文件
- * @details 仅实现布局组织和面板显隐协调，不改动既有编辑器/目录/终端核心业务逻辑
+ * @details 仅实现布局组织与面板显隐协调，不改动编辑器、目录、终端等核心业务逻辑
  * @module ui
  */
 
@@ -16,9 +16,9 @@
 #include "opePanel/TableWidget.h"
 #include "opePanel/TerminalWidget.h"
 
+#include <QHBoxLayout>
 #include <QSplitter>
 #include <QStackedWidget>
-#include <QVBoxLayout>
 #include <QtGlobal>
 
 OpePanelWidget::OpePanelWidget(MainWindow* mainWindow, QWidget* parent)
@@ -33,8 +33,6 @@ OpePanelWidget::OpePanelWidget(MainWindow* mainWindow, QWidget* parent)
     , mainDisplayStackedWidget(new QStackedWidget(this))
     , topHorizontalSplitter(new QSplitter(Qt::Horizontal, this))
     , rootVerticalSplitter(new QSplitter(Qt::Vertical, this))
-    , aiPanelExpandWidth(260)
-    , terminalExpandHeight(190)
 {
     initUI();
     initStyle();
@@ -44,9 +42,9 @@ OpePanelWidget::OpePanelWidget(MainWindow* mainWindow, QWidget* parent)
 /**
  * @brief 初始化界面布局
  * @details
- * 1. 上层使用水平 Splitter 管理 ActivityBar / SidePanel / MainDisplay / AiPanel。
- * 2. 根布局使用垂直 Splitter 管理“上层工作区”与“下层 Terminal”。
- * 3. 通过 setSizes 控制初始展开比例，避免覆盖式面板。
+ * 1. 将 ActivityBar 固定在工作区最左侧，不参与 Terminal 的上下分割。
+ * 2. 右侧工作区采用“上方水平分割 + 下方 Terminal”结构，保证 Terminal 只占右侧底部。
+ * 3. SidePanel / AI / Terminal 默认均为可折叠，展开时使用固定默认尺寸恢复。
  */
 void OpePanelWidget::initUI()
 {
@@ -55,26 +53,27 @@ void OpePanelWidget::initUI()
     mainDisplayStackedWidget->setCurrentWidget(editorWidget);
 
     // 作者：YuzhSong
-    // SidePanel 允许宽度压缩到 0，保证能够被完全收起。
+    // 允许面板尺寸压缩到 0，确保 QSplitter 折叠时可以完全收起。
     sidePanelContainer->setMinimumWidth(0);
     aiPanelWidget->setMinimumWidth(0);
-    aiPanelWidget->setMaximumWidth(QWIDGETSIZE_MAX);
+    terminalWidget->setMinimumHeight(0);
 
-    topHorizontalSplitter->addWidget(activityBarWidget);
+    // 作者：YuzhSong
+    // 上方主工作区仅包含 SidePanel / Editor / AI，避免 ActivityBar 被底部 Terminal 影响。
     topHorizontalSplitter->addWidget(sidePanelContainer);
     topHorizontalSplitter->addWidget(mainDisplayStackedWidget);
     topHorizontalSplitter->addWidget(aiPanelWidget);
-    topHorizontalSplitter->setCollapsible(0, false);
-    topHorizontalSplitter->setCollapsible(1, true);
-    topHorizontalSplitter->setCollapsible(2, false);
-    topHorizontalSplitter->setCollapsible(3, true);
+    topHorizontalSplitter->setCollapsible(0, true);
+    topHorizontalSplitter->setCollapsible(1, false);
+    topHorizontalSplitter->setCollapsible(2, true);
     topHorizontalSplitter->setStretchFactor(0, 0);
-    topHorizontalSplitter->setStretchFactor(1, 0);
-    topHorizontalSplitter->setStretchFactor(2, 1);
-    topHorizontalSplitter->setStretchFactor(3, 0);
+    topHorizontalSplitter->setStretchFactor(1, 1);
+    topHorizontalSplitter->setStretchFactor(2, 0);
     topHorizontalSplitter->setHandleWidth(4);
-    topHorizontalSplitter->setSizes({48, 220, 1100, 0});
+    topHorizontalSplitter->setSizes({SIDE_PANEL_DEFAULT_WIDTH, 1200, 0});
 
+    // 作者：YuzhSong
+    // 右侧工作区采用垂直分割：上方主工作区 + 下方 Terminal。
     rootVerticalSplitter->addWidget(topHorizontalSplitter);
     rootVerticalSplitter->addWidget(terminalWidget);
     rootVerticalSplitter->setCollapsible(0, false);
@@ -84,27 +83,25 @@ void OpePanelWidget::initUI()
     rootVerticalSplitter->setHandleWidth(4);
     rootVerticalSplitter->setSizes({900, 0});
 
-    auto* mainLayout = new QVBoxLayout(this);
     // 作者：YuzhSong
-    // 主工作区外围增加轻微留白，增强各面板分层；不改变 splitter 分配逻辑。
+    // 外层改为水平布局：左侧固定 ActivityBar，右侧完整工作区。
+    auto* mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(6, 6, 6, 6);
     mainLayout->setSpacing(6);
+
+    activityBarWidget->setFixedWidth(ACTIVITY_BAR_WIDTH);
+    mainLayout->addWidget(activityBarWidget, 0);
     mainLayout->addWidget(rootVerticalSplitter, 1);
 
-    // 默认右侧 AI 面板与底部 Terminal 都收起。
-    hideAiPanel();
-    hideTerminalPanel();
+    collapseAiPanel();
+    collapseTerminal();
+    showSidePanelWithDefaultWidth();
+    sidePanelContainer->showFilePanel();
     updateActivityBarState();
 }
 
-/**
- * @brief 初始化容器样式
- * @details 维持深灰基调，避免破坏原有 Run 按钮或业务组件自有样式
- */
 void OpePanelWidget::initStyle()
 {
-    // 作者：YuzhSong
-    // 统一工作区底色与 splitter 把手样式，保持深灰主调与轻微赛博感细节。
     setStyleSheet(QString(
         "QWidget {"
         "    background-color: #1E1F22;"
@@ -120,13 +117,6 @@ void OpePanelWidget::initStyle()
     ));
 }
 
-/**
- * @brief 初始化信号槽连接
- * @details
- * 1. 保留 DirectoryWidget 与 EditorWidget 的既有联动。
- * 2. 保留 Editor 与 Terminal 的执行链路，不改动业务逻辑。
- * 3. 将 ActivityBar 的四个按钮请求映射为对应面板显隐操作。
- */
 void OpePanelWidget::initConnections()
 {
     DirectoryWidget* directoryWidget = sidePanelContainer->directoryWidget();
@@ -146,20 +136,12 @@ void OpePanelWidget::initConnections()
     connect(terminalWidget, &TerminalWidget::sqlSubmitted,
             editorWidget, &EditorWidget::executeSql);
 
-    connect(activityBarWidget, &ActivityBarWidget::filePanelRequested, this, [this]() {
-        sidePanelContainer->toggleFilePanel();
-        updateActivityBarState();
-    });
-
-    connect(activityBarWidget, &ActivityBarWidget::logPanelRequested, this, [this]() {
-        sidePanelContainer->toggleLogPanel();
-        updateActivityBarState();
-    });
-
-    connect(activityBarWidget, &ActivityBarWidget::aiPanelRequested,
-            this, &OpePanelWidget::toggleAiPanel);
-    connect(activityBarWidget, &ActivityBarWidget::terminalPanelRequested,
-            this, &OpePanelWidget::toggleTerminalPanel);
+    // 作者：YuzhSong
+    // ActivityBar 仅发出“请求”信号，实际面板控制保持在 OpePanelWidget 内，避免组件间强耦合。
+    connect(activityBarWidget, &ActivityBarWidget::filePanelRequested, this, &OpePanelWidget::toggleFilePanel);
+    connect(activityBarWidget, &ActivityBarWidget::logPanelRequested, this, &OpePanelWidget::toggleLogPanel);
+    connect(activityBarWidget, &ActivityBarWidget::aiPanelRequested, this, &OpePanelWidget::toggleAiPanel);
+    connect(activityBarWidget, &ActivityBarWidget::terminalPanelRequested, this, &OpePanelWidget::toggleTerminalPanel);
 }
 
 void OpePanelWidget::switchWidget(QWidget* widget)
@@ -178,121 +160,144 @@ void OpePanelWidget::switchWidget(QWidget* widget)
 
 void OpePanelWidget::toggleDirectoryPanel()
 {
-    sidePanelContainer->toggleFilePanel();
-    updateActivityBarState();
+    toggleFilePanel();
 }
 
 void OpePanelWidget::collapseDirectoryPanel()
 {
-    sidePanelContainer->collapsePanel();
+    collapseSidePanel();
     updateActivityBarState();
 }
 
 void OpePanelWidget::expandDirectoryPanel()
 {
     sidePanelContainer->showFilePanel();
+    showSidePanelWithDefaultWidth();
     updateActivityBarState();
 }
 
-/**
- * @brief 切换 AI 面板显示状态
- * @details 根据当前可见状态在 show/hide 之间切换，并同步按钮高亮
- */
+void OpePanelWidget::toggleFilePanel()
+{
+    const bool samePanelVisible = sidePanelContainer->isPanelVisible()
+                                  && sidePanelContainer->currentPanelType() == SidePanelContainer::PanelType::File;
+
+    if (samePanelVisible) {
+        collapseSidePanel();
+    } else {
+        sidePanelContainer->showFilePanel();
+        showSidePanelWithDefaultWidth();
+    }
+
+    updateActivityBarState();
+}
+
+void OpePanelWidget::toggleLogPanel()
+{
+    const bool samePanelVisible = sidePanelContainer->isPanelVisible()
+                                  && sidePanelContainer->currentPanelType() == SidePanelContainer::PanelType::Log;
+
+    if (samePanelVisible) {
+        collapseSidePanel();
+    } else {
+        sidePanelContainer->showLogPanel();
+        showSidePanelWithDefaultWidth();
+    }
+
+    updateActivityBarState();
+}
+
+void OpePanelWidget::showSidePanelWithDefaultWidth()
+{
+    sidePanelContainer->setVisible(true);
+
+    QList<int> sizes = topHorizontalSplitter->sizes();
+    if (sizes.size() != 3) {
+        topHorizontalSplitter->setSizes({SIDE_PANEL_DEFAULT_WIDTH, 1200, 0});
+        return;
+    }
+
+    const int aiWidth = isAiPanelVisible() ? AI_PANEL_DEFAULT_WIDTH : 0;
+    sizes[0] = SIDE_PANEL_DEFAULT_WIDTH;
+    sizes[2] = aiWidth;
+    sizes[1] = qMax(300, topHorizontalSplitter->width() - sizes[0] - sizes[2]);
+    topHorizontalSplitter->setSizes(sizes);
+}
+
+void OpePanelWidget::collapseSidePanel()
+{
+    sidePanelContainer->collapsePanel();
+    QList<int> sizes = topHorizontalSplitter->sizes();
+    if (sizes.size() == 3) {
+        sizes[1] += sizes[0];
+        sizes[0] = 0;
+        topHorizontalSplitter->setSizes(sizes);
+    }
+}
+
 void OpePanelWidget::toggleAiPanel()
 {
     if (isAiPanelVisible()) {
-        hideAiPanel();
+        collapseAiPanel();
     } else {
-        showAiPanel();
+        showAiPanelWithDefaultWidth();
     }
     updateActivityBarState();
 }
 
-/**
- * @brief 展开 AI 面板
- * @details
- * 1. 仅修改 splitter 尺寸，不覆盖 EditorWidget。
- * 2. 通过压缩中央区域宽度实现“并排显示”。
- */
-void OpePanelWidget::showAiPanel()
+void OpePanelWidget::showAiPanelWithDefaultWidth()
 {
     aiPanelWidget->setVisible(true);
 
     QList<int> sizes = topHorizontalSplitter->sizes();
-    if (sizes.size() != 4) {
-        topHorizontalSplitter->setSizes({48, 220, 1000, aiPanelExpandWidth});
+    if (sizes.size() != 3) {
+        topHorizontalSplitter->setSizes({SIDE_PANEL_DEFAULT_WIDTH, 1200, AI_PANEL_DEFAULT_WIDTH});
         return;
     }
 
-    const int currentAiWidth = sizes[3];
-    if (currentAiWidth <= 0) {
-        const int delta = aiPanelExpandWidth;
-        sizes[3] = aiPanelExpandWidth;
-        sizes[2] = qMax(240, sizes[2] - delta);
-    } else {
-        sizes[3] = aiPanelExpandWidth;
-    }
+    const int sideWidth = sidePanelContainer->isPanelVisible() ? SIDE_PANEL_DEFAULT_WIDTH : 0;
+    sizes[0] = sideWidth;
+    sizes[2] = AI_PANEL_DEFAULT_WIDTH;
+    sizes[1] = qMax(300, topHorizontalSplitter->width() - sizes[0] - sizes[2]);
     topHorizontalSplitter->setSizes(sizes);
 }
 
-/**
- * @brief 收起 AI 面板
- * @details 保留组件实例，仅将宽度压缩为 0，便于后续快速展开
- */
-void OpePanelWidget::hideAiPanel()
+void OpePanelWidget::collapseAiPanel()
 {
     QList<int> sizes = topHorizontalSplitter->sizes();
-    if (sizes.size() == 4) {
-        sizes[2] += sizes[3];
-        sizes[3] = 0;
+    if (sizes.size() == 3) {
+        sizes[1] += sizes[2];
+        sizes[2] = 0;
         topHorizontalSplitter->setSizes(sizes);
     }
     aiPanelWidget->setVisible(false);
 }
 
-/**
- * @brief 切换 Terminal 面板显示状态
- * @details 根据当前可见状态在 show/hide 之间切换，并同步按钮高亮
- */
 void OpePanelWidget::toggleTerminalPanel()
 {
     if (isTerminalPanelVisible()) {
-        hideTerminalPanel();
+        collapseTerminal();
     } else {
-        showTerminalPanel();
+        showTerminalWithDefaultHeight();
     }
     updateActivityBarState();
 }
 
-/**
- * @brief 展开 Terminal 面板
- * @details 使用垂直 splitter 压缩上方工作区高度，不改动 Terminal 内部逻辑
- */
-void OpePanelWidget::showTerminalPanel()
+void OpePanelWidget::showTerminalWithDefaultHeight()
 {
     terminalWidget->setVisible(true);
 
     QList<int> sizes = rootVerticalSplitter->sizes();
     if (sizes.size() != 2) {
-        rootVerticalSplitter->setSizes({700, terminalExpandHeight});
+        rootVerticalSplitter->setSizes({700, TERMINAL_DEFAULT_HEIGHT});
         return;
     }
 
-    if (sizes[1] <= 0) {
-        const int delta = terminalExpandHeight;
-        sizes[1] = terminalExpandHeight;
-        sizes[0] = qMax(260, sizes[0] - delta);
-    } else {
-        sizes[1] = terminalExpandHeight;
-    }
+    sizes[1] = TERMINAL_DEFAULT_HEIGHT;
+    sizes[0] = qMax(260, rootVerticalSplitter->height() - sizes[1]);
     rootVerticalSplitter->setSizes(sizes);
 }
 
-/**
- * @brief 收起 Terminal 面板
- * @details 保留终端组件实例，仅将分割高度压缩为 0
- */
-void OpePanelWidget::hideTerminalPanel()
+void OpePanelWidget::collapseTerminal()
 {
     QList<int> sizes = rootVerticalSplitter->sizes();
     if (sizes.size() == 2) {
@@ -303,12 +308,6 @@ void OpePanelWidget::hideTerminalPanel()
     terminalWidget->setVisible(false);
 }
 
-/**
- * @brief 同步 ActivityBar 按钮状态
- * @details
- * 1. File/Log 状态基于 SidePanelContainer 当前可见面板类型。
- * 2. AI/Terminal 状态基于对应组件显隐状态。
- */
 void OpePanelWidget::updateActivityBarState()
 {
     const bool sidePanelVisible = sidePanelContainer->isPanelVisible();
@@ -319,7 +318,10 @@ void OpePanelWidget::updateActivityBarState()
     const bool aiActive = isAiPanelVisible();
     const bool terminalActive = isTerminalPanelVisible();
 
-    activityBarWidget->updateSelectionState(fileActive, logActive, aiActive, terminalActive);
+    activityBarWidget->setFileChecked(fileActive);
+    activityBarWidget->setLogChecked(logActive);
+    activityBarWidget->setAiChecked(aiActive);
+    activityBarWidget->setTerminalChecked(terminalActive);
 }
 
 bool OpePanelWidget::isAiPanelVisible() const
@@ -361,3 +363,4 @@ QStackedWidget* OpePanelWidget::getMainDisplayStackedWidget() const
 {
     return mainDisplayStackedWidget;
 }
+
