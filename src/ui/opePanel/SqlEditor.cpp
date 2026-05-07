@@ -147,7 +147,9 @@ void SqlEditor::setupCompleter()
                 << "JOIN" << "LEFT" << "RIGHT" << "INNER" << "OUTER" << "ON"
                 << "GROUP" << "BY" << "ORDER" << "HAVING" << "LIMIT" << "OFFSET"
                 << "DISTINCT" << "AS" << "IN" << "BETWEEN" << "LIKE" << "EXISTS"
-                << "UNION" << "ALL" << "ANY" << "SOME";
+                << "UNION" << "ALL" << "ANY" << "SOME"
+                << "DATABASE" << "DATABASES" << "TABLES"
+                << "USE" << "PRIMARY" << "KEY" << "UNIQUE" << "DEFAULT";
     
     // 数据类型
     sqlKeywords << "INT" << "INTEGER" << "VARCHAR" << "CHAR" << "TEXT"

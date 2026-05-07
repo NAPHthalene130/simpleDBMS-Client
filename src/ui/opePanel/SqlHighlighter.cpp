@@ -100,7 +100,11 @@ void SqlHighlighter::setupHighlightingRules()
                     << "\\bREFERENCES\\b"
                     << "\\bINDEX\\b"
                     << "\\bVIEW\\b"
-                    << "\\bDATABASE\\b";
+                    << "\\bDATABASE\\b"
+                    << "\\bDATABASES\\b"
+                    << "\\bTABLES\\b"
+                    << "\\bUSE\\b"
+                    << "\\bUNIQUE\\b";
 
     // 为每个关键字创建高亮规则
     for (const QString& pattern : keywordPatterns) {
