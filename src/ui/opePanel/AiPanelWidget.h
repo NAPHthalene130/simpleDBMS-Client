@@ -12,6 +12,7 @@
 
 class QLabel;
 class QVBoxLayout;
+class QVBoxLayout;
 
 /**
  * @class AiPanelWidget

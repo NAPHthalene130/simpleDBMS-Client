@@ -7,6 +7,7 @@ class NetworkManager;
 class OpePanelWidget;
 class QStackedWidget;
 class SettingWidget;
+class TopNavigationWidget;
 class QWidget;
 
 /**
@@ -68,8 +69,74 @@ public:
      */
     NetworkManager *getNetworkManager();
 
+    /**
+     * @brief 显示登录认证页
+     * @author YuzhSong
+     * @details
+     * 1. 将主窗口切换到 AuthWidget 页面；
+     * 2. 该页面不显示顶部导航栏；
+     * 3. 会同步更新窗口标题语义。
+     */
+    void showAuthPage();
+
+    /**
+     * @brief 显示工作区页面
+     * @author YuzhSong
+     * @details
+     * 1. 切换到主应用容器；
+     * 2. 在主应用内容栈中显示 OpePanelWidget；
+     * 3. 同步顶部导航栏按钮高亮状态。
+     */
+    void showWorkspacePage();
+
+    /**
+     * @brief 显示设置页面
+     * @author YuzhSong
+     * @details
+     * 1. 切换到主应用容器；
+     * 2. 在主应用内容栈中显示 SettingWidget；
+     * 3. 同步顶部导航栏按钮高亮状态。
+     */
+    void showSettingPage();
+
+    /**
+     * @brief 退出登录并返回认证页
+     * @author YuzhSong
+     * @details
+     * 当前阶段仅执行前端页面路由回退，不触发真实网络登出逻辑。
+     */
+    void logout();
+
 private:
-    QStackedWidget *stackedWidget;
+    /**
+     * @brief 初始化主窗口 UI 结构
+     * @author YuzhSong
+     * @details
+     * 结构为：
+     * 1. rootStackedWidget：Auth 页 / 主应用容器；
+     * 2. 主应用容器：TopNavigationWidget + appContentStackedWidget。
+     */
+    void initUI();
+
+    /**
+     * @brief 初始化信号槽连接
+     * @author YuzhSong
+     * @details
+     * 统一收敛页面切换入口，避免依赖 Debug 页面切换。
+     */
+    void initConnections();
+
+    /**
+     * @brief 初始化主窗口样式
+     * @author YuzhSong
+     */
+    void initStyle();
+
+private:
+    QStackedWidget *rootStackedWidget;
+    QWidget *appContainerWidget;
+    QStackedWidget *appContentStackedWidget;
+    TopNavigationWidget *topNavigationWidget;
     AuthWidget *authWidget;
     OpePanelWidget *opePanelWidget;
     SettingWidget *settingWidget;

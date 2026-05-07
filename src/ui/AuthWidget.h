@@ -89,6 +89,16 @@ public:
      */
     void setPassword(const QString &password);
 
+signals:
+    /**
+     * @brief 登录成功信号
+     * @author YuzhSong
+     * @details
+     * 当前阶段仅预留页面路由入口，不包含真实认证过程。
+     * MainWindow 接收该信号后负责切换到工作区页面。
+     */
+    void loginSucceeded();
+
 private slots:
     /**
      * @brief 测试连接按钮点击槽函数

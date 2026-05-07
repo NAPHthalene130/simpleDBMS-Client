@@ -9,8 +9,6 @@
 #include <QVBoxLayout>
 
 #include "mainwindow.h"
-#include "ui/OpePanelWidget.h"
-
 /**
  * @brief 构造函数
  * @author NAPH130
@@ -276,5 +274,7 @@ void AuthWidget::onTestConnection()
  */
 void AuthWidget::onConfirmConnection()
 {
-    // TODO: 确认连接并切换到操作面板
+    // 作者：YuzhSong，当前仅预留登录成功信号，后续由连接认证逻辑触发。
+    // 为保证本阶段可以手动演示正式页面路由，这里临时发出 loginSucceeded 信号。
+    emit loginSucceeded();
 }
