@@ -9,21 +9,61 @@
 #include "mainwindow.h"
 #include "NetworkManager.h"
 #include "models/network/NetworkTransferData.h"
+#include "ui/OpePanelWidget.h"
+#include "ui/opePanel/TerminalWidget.h"
 
 namespace {
-QString buildDisplayMessage(const NetworkTransferData &networkTransferData)
+QString buildCommandDisplay(const NetworkTransferData &networkTransferData)
+{
+    if (!networkTransferData.getSql().empty()) {
+        return QString::fromStdString(networkTransferData.getSql());
+    }
+    return QString();
+}
+
+QString buildMessageText(const NetworkTransferData &networkTransferData)
 {
     if (!networkTransferData.getMessage().empty()) {
         return QString::fromStdString(networkTransferData.getMessage());
     }
-
-    if (!networkTransferData.getSql().empty()) {
-        return QString::fromStdString(networkTransferData.getSql());
-    }
-
     return QString::fromStdString(networkTransferData.toJson());
 }
+
+QString buildQueryResultText(const NetworkTransferData &networkTransferData)
+{
+    const auto &columns = networkTransferData.getColumns();
+    const auto &rows = networkTransferData.getRows();
+
+    if (columns.empty() && rows.empty()) {
+        return buildMessageText(networkTransferData);
+    }
+
+    QString result;
+
+    if (!columns.empty()) {
+        QStringList columnList;
+        for (const auto &col : columns) {
+            columnList.append(QString::fromStdString(col));
+        }
+        result += columnList.join(" | ") + "\n";
+        result += QString("-").repeated(result.length()) + "\n";
+    }
+
+    for (const auto &row : rows) {
+        QStringList rowList;
+        for (const auto &cell : row) {
+            rowList.append(QString::fromStdString(cell));
+        }
+        result += rowList.join(" | ") + "\n";
+    }
+
+    if (!networkTransferData.getMessage().empty()) {
+        result += "\n" + QString::fromStdString(networkTransferData.getMessage());
+    }
+
+    return result.trimmed();
 }
+} // namespace
 
 NetReceiver::NetReceiver(MainWindow *mainWindow)
     : mainWindow(mainWindow),
@@ -73,15 +113,69 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
         lastReceivedMessage = networkTransferData.toJson();
     }
 
-    const QString messageText = buildDisplayMessage(networkTransferData);
+    auto *terminalWidget = getTerminalWidget();
 
-    if (mainWindow != nullptr) {
-        QMetaObject::invokeMethod(mainWindow,
-                                  [window = mainWindow, messageText]() {
-                                      window->setProperty("lastReceivedMessage", messageText);
-                                  },
-                                  Qt::QueuedConnection);
+    if (networkTransferData.getType() == NetworkTransferData::SQL_EXEC_RESPONSE) {
+        const QString msg = buildMessageText(networkTransferData);
+        if (networkTransferData.getSuccess()) {
+            invokeTerminalAppend(
+                terminalWidget,
+                [msg](TerminalWidget *tw) { tw->appendMessage(msg); });
+        } else {
+            invokeTerminalAppend(
+                terminalWidget,
+                [msg](TerminalWidget *tw) { tw->appendError(msg); });
+        }
+        return;
     }
+
+    if (networkTransferData.getType() == NetworkTransferData::SQL_QUERY_RESPONSE) {
+        const QString text = buildQueryResultText(networkTransferData);
+        if (networkTransferData.getSuccess()) {
+            invokeTerminalAppend(
+                terminalWidget,
+                [text](TerminalWidget *tw) { tw->appendMessage(text); });
+        } else {
+            invokeTerminalAppend(
+                terminalWidget,
+                [text](TerminalWidget *tw) { tw->appendError(text); });
+        }
+        return;
+    }
+
+    if (networkTransferData.getType() == NetworkTransferData::LOGIN_RESPONSE) {
+        // TODO: 处理登录响应
+        storeAsProperty(buildMessageText(networkTransferData));
+        return;
+    }
+
+    if (networkTransferData.getType() == NetworkTransferData::VERIFY_RESPONSE) {
+        // TODO: 处理连接验证响应
+        storeAsProperty(buildMessageText(networkTransferData));
+        return;
+    }
+
+    if (networkTransferData.getType() == NetworkTransferData::USE_DATABASE_RESPONSE) {
+        // TODO: 处理数据库切换响应
+        storeAsProperty(buildMessageText(networkTransferData));
+        return;
+    }
+
+    if (networkTransferData.getType() == NetworkTransferData::DIRECTORY_RESPONSE) {
+        // TODO: 处理数据库目录响应
+        storeAsProperty(buildMessageText(networkTransferData));
+        return;
+    }
+
+    if (networkTransferData.getType() == NetworkTransferData::ERROR_RESPONSE) {
+        const QString msg = buildMessageText(networkTransferData);
+        invokeTerminalAppend(
+            terminalWidget,
+            [msg](TerminalWidget *tw) { tw->appendError(msg); });
+        return;
+    }
+
+    storeAsProperty(buildMessageText(networkTransferData));
 }
 
 std::string NetReceiver::getLastReceivedMessage() const
@@ -169,4 +263,44 @@ std::uint32_t NetReceiver::parseLengthHeader(const std::array<unsigned char, 4> 
            | (static_cast<std::uint32_t>(lengthHeader[1]) << 16U)
            | (static_cast<std::uint32_t>(lengthHeader[2]) << 8U)
            | static_cast<std::uint32_t>(lengthHeader[3]);
+}
+
+TerminalWidget *NetReceiver::getTerminalWidget() const
+{
+    if (mainWindow == nullptr) {
+        return nullptr;
+    }
+    auto *opePanel = mainWindow->getOpePanelWidget();
+    if (opePanel == nullptr) {
+        return nullptr;
+    }
+    return opePanel->getTerminalWidget();
+}
+
+void NetReceiver::invokeTerminalAppend(TerminalWidget *terminalWidget,
+                                       const std::function<void(TerminalWidget *)> &action)
+{
+    if (mainWindow == nullptr) {
+        return;
+    }
+
+    QMetaObject::invokeMethod(
+        mainWindow,
+        [action, terminalWidget]() {
+            if (terminalWidget != nullptr) {
+                action(terminalWidget);
+            }
+        },
+        Qt::QueuedConnection);
+}
+
+void NetReceiver::storeAsProperty(const QString &messageText)
+{
+    if (mainWindow != nullptr) {
+        QMetaObject::invokeMethod(mainWindow,
+                                  [window = mainWindow, messageText]() {
+                                      window->setProperty("lastReceivedMessage", messageText);
+                                  },
+                                  Qt::QueuedConnection);
+    }
 }

@@ -3,20 +3,25 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
 
+#include <QString>
+
 #include <asio/ip/tcp.hpp>
 
 class MainWindow;
 class NetworkTransferData;
+class TerminalWidget;
 
 /**
  * @class NetReceiver
  * @brief 客户端网络接收服务类
- * @details 负责从客户端维护的单个服务端套接字中按“4 字节长度 + 消息体”的协议读取消息。
+ * @details 负责从客户端维护的单个服务端套接字中按"4 字节长度 + 消息体"的协议读取消息，
+ *          并根据响应类型将结果分发到对应的界面组件。
  * @author NAPH130
  */
 class NetReceiver
@@ -82,6 +87,29 @@ private:
      * @return 消息体长度
      */
     std::uint32_t parseLengthHeader(const std::array<unsigned char, 4> &lengthHeader) const;
+
+    /**
+     * @brief 获取终端组件指针
+     * @author NAPH130
+     * @return 终端组件指针，可能为空
+     */
+    TerminalWidget *getTerminalWidget() const;
+
+    /**
+     * @brief 安全地在主线程追加终端输出
+     * @author NAPH130
+     * @param terminalWidget 终端组件指针
+     * @param action 终端操作回调
+     */
+    void invokeTerminalAppend(TerminalWidget *terminalWidget,
+                              const std::function<void(TerminalWidget *)> &action);
+
+    /**
+     * @brief 以属性方式暂存消息（兼容旧行为）
+     * @author NAPH130
+     * @param messageText 消息文本
+     */
+    void storeAsProperty(const QString &messageText);
 
     MainWindow *mainWindow;
     std::atomic<bool> isRunning;

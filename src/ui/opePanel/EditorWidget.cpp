@@ -457,6 +457,8 @@ void EditorWidget::executeSql(const QString& sql)
 
     netSender->send(socket, data.toJson());
 
+    emit sqlExecuted(sql);
+
     qDebug() << QString("[%1][DEBUG] SQL sent to server: %2")
                     .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"), sql);
 }

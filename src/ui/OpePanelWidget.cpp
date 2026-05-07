@@ -96,9 +96,6 @@ void OpePanelWidget::initUI()
  */
 void OpePanelWidget::initConnections()
 {
-    // 关键解耦链路：
-    // EditorWidget 只发“文件状态变化”事件，不直接操作目录控件；
-    // DirectoryWidget 只发“用户激活哪个文件”事件，不直接操作编辑器内容。
     connect(editorWidget, &EditorWidget::fileOpened,
             directoryWidget, &DirectoryWidget::addOpenedFile);
 
@@ -108,11 +105,15 @@ void OpePanelWidget::initConnections()
     connect(directoryWidget, &DirectoryWidget::fileActivated,
             editorWidget, &EditorWidget::switchToFile);
 
-    // EditorWidget 中侧栏按钮仅发请求，真正的布局控制由协调层统一处理。
     connect(editorWidget, &EditorWidget::toggleDirectoryRequested,
             this, &OpePanelWidget::toggleDirectoryPanel);
 
-    // 用户手动拖拽 splitter 时，记录目录宽度，便于下一次展开恢复体验。
+    connect(editorWidget, &EditorWidget::sqlExecuted,
+            terminalWidget, &TerminalWidget::appendCommand);
+
+    connect(terminalWidget, &TerminalWidget::sqlSubmitted,
+            editorWidget, &EditorWidget::executeSql);
+
     connect(horizontalSplitter, &QSplitter::splitterMoved, this, [this](int pos, int) {
         if (!directoryCollapsed && pos > 0) {
             lastDirectoryPanelWidth = qMax(120, pos);

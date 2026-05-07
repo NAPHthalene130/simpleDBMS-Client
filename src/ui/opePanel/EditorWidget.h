@@ -90,6 +90,14 @@ signals:
      */
     void toggleDirectoryRequested();
 
+    /**
+     * @brief SQL 已发送信号
+     * @details 用于通知 TerminalWidget 记录已执行的 SQL 命令。
+     * @author NAPH130
+     * @param sql 已发送的 SQL 文本
+     */
+    void sqlExecuted(const QString& sql);
+
 private slots:
     /**
      * @brief 新建文件槽函数
