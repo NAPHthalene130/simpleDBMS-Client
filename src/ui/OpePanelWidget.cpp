@@ -1,51 +1,52 @@
 /**
  * @file OpePanelWidget.cpp
- * @brief 操作面板容器组件实现文件
- * @details 负责：
- *          1. 用 QSplitter 组织左侧 DirectoryWidget 与右侧主工作区
- *          2. 连接 DirectoryWidget 与 EditorWidget 的文件激活/同步信号
- *          3. 统一处理目录侧栏展开/收起逻辑
+ * @brief 操作工作区主容器实现文件
+ * @details 负责 IDE 风格工作区布局搭建与基础显示逻辑连接，不改动编辑器/终端核心业务。
  * @author YuzhSong
- * @date 2026-04-26
+ * @date 2026-05-07
+ * @module ui
  */
 
 #include "OpePanelWidget.h"
 
+#include "opePanel/ActivityBarWidget.h"
 #include "opePanel/DirectoryWidget.h"
 #include "opePanel/EditorWidget.h"
+#include "opePanel/SidePanelContainer.h"
 #include "opePanel/TableWidget.h"
 #include "opePanel/TerminalWidget.h"
 
 #include <QSplitter>
 #include <QStackedWidget>
-#include <QtGlobal>
 #include <QVBoxLayout>
 
 /**
  * @brief 构造函数
- * @author YuzhSong
  * @param mainWindow 主窗口指针
  * @param parent 父组件指针
+ * @author YuzhSong
  */
 OpePanelWidget::OpePanelWidget(MainWindow* mainWindow, QWidget* parent)
     : QWidget(parent)
     , mainWindow(mainWindow)
-    , directoryWidget(new DirectoryWidget(mainWindow, this))
+    , activityBarWidget(new ActivityBarWidget(this))
+    , sidePanelContainer(new SidePanelContainer(mainWindow, this))
     , editorWidget(new EditorWidget(mainWindow, this))
     , tableWidget(new TableWidget(mainWindow, this))
     , terminalWidget(new TerminalWidget(mainWindow, this))
     , mainDisplayStackedWidget(new QStackedWidget(this))
     , rightPanelWidget(new QWidget(this))
     , horizontalSplitter(new QSplitter(Qt::Horizontal, this))
-    , directoryCollapsed(false)
-    , lastDirectoryPanelWidth(220)
 {
     initUI();
     initConnections();
 }
 
 /**
- * @brief 初始化 UI 布局
+ * @brief 初始化界面布局
+ * @details
+ * 1. 水平方向采用 ActivityBar + SidePanel + RightPanel 结构。
+ * 2. RightPanel 内部继续保留“主显示区 + TerminalWidget”垂直结构，保证原有终端位置不变。
  * @author YuzhSong
  */
 void OpePanelWidget::initUI()
@@ -71,31 +72,42 @@ void OpePanelWidget::initUI()
     rightLayout->addWidget(mainDisplayStackedWidget, 1);
     rightLayout->addWidget(terminalWidget, 0);
 
-    // 目录组件必须允许最小宽度为 0，才能在 splitter 中完全收起。
-    directoryWidget->setMinimumWidth(0);
+    // SidePanelContainer 允许最小宽度为 0，后续可被完全收起。
+    sidePanelContainer->setMinimumWidth(0);
 
-    // 外层采用 QSplitter，替代普通 QHBoxLayout 固定分配，提供 IDE 风格拖拽与折叠。
-    horizontalSplitter->addWidget(directoryWidget);
+    // 使用三段式 splitter：最左窄 ActivityBar，中间可收起 SidePanel，右侧主工作区。
+    horizontalSplitter->addWidget(activityBarWidget);
+    horizontalSplitter->addWidget(sidePanelContainer);
     horizontalSplitter->addWidget(rightPanelWidget);
-    horizontalSplitter->setCollapsible(0, true);
-    horizontalSplitter->setCollapsible(1, false);
+    horizontalSplitter->setCollapsible(0, false);
+    horizontalSplitter->setCollapsible(1, true);
+    horizontalSplitter->setCollapsible(2, false);
     horizontalSplitter->setStretchFactor(0, 0);
-    horizontalSplitter->setStretchFactor(1, 1);
+    horizontalSplitter->setStretchFactor(1, 0);
+    horizontalSplitter->setStretchFactor(2, 1);
     horizontalSplitter->setHandleWidth(4);
-    horizontalSplitter->setSizes({lastDirectoryPanelWidth, 1200});
+    horizontalSplitter->setSizes({48, 220, 1200});
 
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
     mainLayout->addWidget(horizontalSplitter, 1);
+
+    syncActivityBarState();
 }
 
 /**
  * @brief 初始化信号槽连接
+ * @details
+ * 1. 保持 DirectoryWidget 与 EditorWidget 原有文件联动链路不变。
+ * 2. 新增 ActivityBar 与 SidePanelContainer 的切换连接。
+ * 3. AI/Terminal 按钮当前仅保留信号入口，不接入具体面板逻辑。
  * @author YuzhSong
  */
 void OpePanelWidget::initConnections()
 {
+    DirectoryWidget* directoryWidget = sidePanelContainer->directoryWidget();
+
     connect(editorWidget, &EditorWidget::fileOpened,
             directoryWidget, &DirectoryWidget::addOpenedFile);
 
@@ -114,17 +126,46 @@ void OpePanelWidget::initConnections()
     connect(terminalWidget, &TerminalWidget::sqlSubmitted,
             editorWidget, &EditorWidget::executeSql);
 
-    connect(horizontalSplitter, &QSplitter::splitterMoved, this, [this](int pos, int) {
-        if (!directoryCollapsed && pos > 0) {
-            lastDirectoryPanelWidth = qMax(120, pos);
-        }
+    // ActivityBar 仅发出“请求”，由 OpePanelWidget 协调 SidePanelContainer 进行显示状态变更。
+    connect(activityBarWidget, &ActivityBarWidget::filePanelRequested, this, [this]() {
+        sidePanelContainer->toggleFilePanel();
+        syncActivityBarState();
+    });
+
+    connect(activityBarWidget, &ActivityBarWidget::logPanelRequested, this, [this]() {
+        sidePanelContainer->toggleLogPanel();
+        syncActivityBarState();
+    });
+
+    // 预留信号：当前阶段不实现 AI / Terminal 左侧面板逻辑，仅维持按钮可点击与扩展点完整性。
+    connect(activityBarWidget, &ActivityBarWidget::aiPanelRequested, this, [this]() {
+        syncActivityBarState();
+    });
+
+    connect(activityBarWidget, &ActivityBarWidget::terminalPanelRequested, this, [this]() {
+        syncActivityBarState();
     });
 }
 
 /**
- * @brief 切换中央主显示区组件
+ * @brief 同步 ActivityBar 选中态
+ * @details 基于 SidePanelContainer 当前可见状态与面板类型刷新 File/Log 高亮。
  * @author YuzhSong
+ */
+void OpePanelWidget::syncActivityBarState()
+{
+    const bool panelVisible = sidePanelContainer->isPanelVisible();
+    const auto panelType = sidePanelContainer->currentPanelType();
+
+    const bool fileActive = panelVisible && panelType == SidePanelContainer::PanelType::File;
+    const bool logActive = panelVisible && panelType == SidePanelContainer::PanelType::Log;
+    activityBarWidget->updateSelectionState(fileActive, logActive);
+}
+
+/**
+ * @brief 切换中央主显示区组件
  * @param widget 目标显示组件
+ * @author YuzhSong
  */
 void OpePanelWidget::switchWidget(QWidget* widget)
 {
@@ -141,68 +182,40 @@ void OpePanelWidget::switchWidget(QWidget* widget)
 }
 
 /**
- * @brief 切换目录侧栏展开/收起
+ * @brief 切换 File 面板显示状态（兼容旧入口）
+ * @details 复用 SidePanelContainer 的 toggleFilePanel 逻辑。
  * @author YuzhSong
  */
 void OpePanelWidget::toggleDirectoryPanel()
 {
-    if (directoryCollapsed) {
-        expandDirectoryPanel();
-    } else {
-        collapseDirectoryPanel();
-    }
+    sidePanelContainer->toggleFilePanel();
+    syncActivityBarState();
 }
 
 /**
- * @brief 收起目录侧栏
+ * @brief 收起左侧宽面板（兼容旧入口）
  * @author YuzhSong
  */
 void OpePanelWidget::collapseDirectoryPanel()
 {
-    if (directoryCollapsed) {
-        return;
-    }
-
-    const QList<int> sizes = horizontalSplitter->sizes();
-    if (sizes.size() >= 2 && sizes[0] > 0) {
-        lastDirectoryPanelWidth = qMax(120, sizes[0]);
-    }
-
-    directoryCollapsed = true;
-    horizontalSplitter->setSizes({0, qMax(1, width())});
+    sidePanelContainer->collapsePanel();
+    syncActivityBarState();
 }
 
 /**
- * @brief 展开目录侧栏
+ * @brief 展开左侧宽面板并显示 File 面板（兼容旧入口）
  * @author YuzhSong
  */
 void OpePanelWidget::expandDirectoryPanel()
 {
-    if (!directoryCollapsed) {
-        return;
-    }
-
-    directoryCollapsed = false;
-
-    const QList<int> sizes = horizontalSplitter->sizes();
-    int totalWidth = 0;
-    for (const int size : sizes) {
-        totalWidth += size;
-    }
-
-    if (totalWidth <= 0) {
-        totalWidth = qMax(width(), 1000);
-    }
-
-    const int leftWidth = qBound(120, lastDirectoryPanelWidth, qMax(120, totalWidth - 300));
-    const int rightWidth = qMax(300, totalWidth - leftWidth);
-    horizontalSplitter->setSizes({leftWidth, rightWidth});
+    sidePanelContainer->showFilePanel();
+    syncActivityBarState();
 }
 
 /**
  * @brief 获取主窗口指针
- * @author YuzhSong
  * @return 主窗口指针
+ * @author YuzhSong
  */
 MainWindow* OpePanelWidget::getMainWindow() const
 {
@@ -210,19 +223,19 @@ MainWindow* OpePanelWidget::getMainWindow() const
 }
 
 /**
- * @brief 获取左侧目录组件
- * @author YuzhSong
+ * @brief 获取目录组件
  * @return 目录组件指针
+ * @author YuzhSong
  */
 DirectoryWidget* OpePanelWidget::getDirectoryWidget() const
 {
-    return directoryWidget;
+    return sidePanelContainer->directoryWidget();
 }
 
 /**
- * @brief 获取中央编辑器组件
- * @author YuzhSong
+ * @brief 获取编辑器组件
  * @return 编辑器组件指针
+ * @author YuzhSong
  */
 EditorWidget* OpePanelWidget::getEditorWidget() const
 {
@@ -230,9 +243,9 @@ EditorWidget* OpePanelWidget::getEditorWidget() const
 }
 
 /**
- * @brief 获取中央数据表格组件
+ * @brief 获取表格组件
+ * @return 表格组件指针
  * @author YuzhSong
- * @return 数据表格组件指针
  */
 TableWidget* OpePanelWidget::getTableWidget() const
 {
@@ -240,9 +253,9 @@ TableWidget* OpePanelWidget::getTableWidget() const
 }
 
 /**
- * @brief 获取下侧终端组件
- * @author YuzhSong
+ * @brief 获取终端组件
  * @return 终端组件指针
+ * @author YuzhSong
  */
 TerminalWidget* OpePanelWidget::getTerminalWidget() const
 {
@@ -251,10 +264,11 @@ TerminalWidget* OpePanelWidget::getTerminalWidget() const
 
 /**
  * @brief 获取中央主显示区容器
+ * @return 中央主显示区容器指针
  * @author YuzhSong
- * @return 主显示区容器指针
  */
 QStackedWidget* OpePanelWidget::getMainDisplayStackedWidget() const
 {
     return mainDisplayStackedWidget;
 }
+
