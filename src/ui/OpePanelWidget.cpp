@@ -69,8 +69,8 @@ void OpePanelWidget::initUI()
     topHorizontalSplitter->setStretchFactor(0, 0);
     topHorizontalSplitter->setStretchFactor(1, 1);
     topHorizontalSplitter->setStretchFactor(2, 0);
-    topHorizontalSplitter->setHandleWidth(4);
-    topHorizontalSplitter->setSizes({SIDE_PANEL_DEFAULT_WIDTH, 1200, 0});
+    topHorizontalSplitter->setHandleWidth(WORKSPACE_GAP);
+    topHorizontalSplitter->setSizes({SIDE_PANEL_DEFAULT_WIDTH, 1200, AI_PANEL_DEFAULT_WIDTH});
 
     // 作者：YuzhSong
     // 右侧工作区采用垂直分割：上方主工作区 + 下方 Terminal。
@@ -80,20 +80,24 @@ void OpePanelWidget::initUI()
     rootVerticalSplitter->setCollapsible(1, true);
     rootVerticalSplitter->setStretchFactor(0, 1);
     rootVerticalSplitter->setStretchFactor(1, 0);
-    rootVerticalSplitter->setHandleWidth(4);
+    rootVerticalSplitter->setHandleWidth(WORKSPACE_GAP);
     rootVerticalSplitter->setSizes({900, 0});
 
     // 作者：YuzhSong
     // 外层改为水平布局：左侧固定 ActivityBar，右侧完整工作区。
     auto* mainLayout = new QHBoxLayout(this);
-    mainLayout->setContentsMargins(6, 6, 6, 6);
-    mainLayout->setSpacing(6);
+    // 作者：YuzhSong
+    // 主工作区使用 4px 统一缝隙，配合父容器 #363636 形成 IDE 区域分隔，不依赖额外假分隔线控件。
+    // 作者：YuzhSong
+    // 主容器外边距统一为 8px，提升面板边缘规整度并对齐上下区域。
+    mainLayout->setContentsMargins(WORKSPACE_MARGIN, WORKSPACE_MARGIN, WORKSPACE_MARGIN, WORKSPACE_MARGIN);
+    mainLayout->setSpacing(WORKSPACE_GAP);
 
     activityBarWidget->setFixedWidth(ACTIVITY_BAR_WIDTH);
     mainLayout->addWidget(activityBarWidget, 0);
     mainLayout->addWidget(rootVerticalSplitter, 1);
 
-    collapseAiPanel();
+    showAiPanelWithDefaultWidth();
     collapseTerminal();
     showSidePanelWithDefaultWidth();
     sidePanelContainer->showFilePanel();
@@ -102,17 +106,19 @@ void OpePanelWidget::initUI()
 
 void OpePanelWidget::initStyle()
 {
+    // 作者：YuzhSong
+    // 统一将容器底色设置为 #363636，布局间距区域自然呈现“缝隙分隔”效果；分割条保持 4px、低亮度深灰。
     setStyleSheet(QString(
         "QWidget {"
-        "    background-color: #1E1F22;"
+        "    background-color: #26282C;"
         "    color: #F0F0F0;"
         "}"
         "QSplitter::handle {"
-        "    background-color: #3A3D42;"
+        "    background-color: #26282C;"
         "    border-radius: 2px;"
         "}"
         "QSplitter::handle:hover {"
-        "    background-color: #4A4E55;"
+        "    background-color: #34373C;"
         "}"
     ));
 }

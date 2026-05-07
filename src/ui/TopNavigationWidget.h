@@ -11,7 +11,7 @@
 #include <QWidget>
 
 class QLabel;
-class QPushButton;
+class QTabBar;
 
 /**
  * @class TopNavigationWidget
@@ -73,8 +73,7 @@ signals:
     void settingRequested();
 
 private slots:
-    void onWorkspaceButtonClicked();
-    void onSettingButtonClicked();
+    void onTabChanged(int index);
 
 private:
     void initUI();
@@ -85,8 +84,7 @@ private:
 private:
     PageType currentPageType;
     QLabel *brandLabel;
-    QPushButton *workspaceButton;
-    QPushButton *settingButton;
+    QTabBar *navigationTabBar;
     QLabel *userNamePrefixLabel;
     QLabel *userNameValueLabel;
 };

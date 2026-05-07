@@ -54,10 +54,12 @@ public slots:
 private:
     // 作者：YuzhSong
     // 统一关键默认尺寸，确保折叠后再次展开恢复程序默认值，而不是恢复用户拖动后的历史尺寸。
-    static constexpr int ACTIVITY_BAR_WIDTH = 48;
-    static constexpr int SIDE_PANEL_DEFAULT_WIDTH = 220;
-    static constexpr int AI_PANEL_DEFAULT_WIDTH = 280;
-    static constexpr int TERMINAL_DEFAULT_HEIGHT = 180;
+    static constexpr int ACTIVITY_BAR_WIDTH = 56;
+    static constexpr int SIDE_PANEL_DEFAULT_WIDTH = 260;
+    static constexpr int AI_PANEL_DEFAULT_WIDTH = 300;
+    static constexpr int TERMINAL_DEFAULT_HEIGHT = 220;
+    static constexpr int WORKSPACE_GAP = 6;
+    static constexpr int WORKSPACE_MARGIN = 8;
 
     /**
      * @brief 初始化界面布局
@@ -153,4 +155,3 @@ private:
     QSplitter* topHorizontalSplitter;          ///< 上方水平分割：SidePanel/Main/AI
     QSplitter* rootVerticalSplitter;           ///< 右侧垂直分割：上方主工作区 + 下方Terminal
 };
-

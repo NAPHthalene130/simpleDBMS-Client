@@ -80,53 +80,65 @@ MainWindow* EditorWidget::getMainWindow() const
  */
 void EditorWidget::initUI()
 {
+    // 作者：YuzhSong
+    // EditorWidget 外层直接作为主编辑面板，统一圆角和背景层级，不改动 SqlEditor 内部语法高亮与行号逻辑。
+    setObjectName("editorWidgetRoot");
+
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->setSpacing(0);
+    // 作者：YuzhSong
+    // 工具栏与编辑区间使用细间隙衔接，保持一体化面板观感同时保留轻微层次分界。
+    mainLayout->setSpacing(2);
 
     toolbar = new QToolBar(this);
     toolbar->setToolButtonStyle(Qt::ToolButtonTextOnly);
     toolbar->setMovable(false);
     toolbar->setIconSize(QSize(16, 16));
     toolbar->setFixedHeight(44);
+    toolbar->setObjectName("editorToolbar");
     // 作者：YuzhSong
     // 仅统一工具栏视觉样式，不修改新建/打开/保存/运行及目录开关的业务行为。
     toolbar->setStyleSheet(
-        "QToolBar {"
+        "EditorWidget#editorWidgetRoot {"
         "    background-color: #252629;"
+        "    border: 1px solid #3A3D42;"
+        "    border-radius: 14px;"
+        "}"
+        "QToolBar#editorToolbar {"
+        "    background-color: #202124;"
         "    border: none;"
-        "    border-bottom: 1px solid #3A3D42;"
-        "    border-radius: 8px;"
+        "    border-top-left-radius: 14px;"
+        "    border-top-right-radius: 14px;"
         "    padding: 4px 6px;"
         "    spacing: 4px;"
         "}"
-        "QToolBar QToolButton {"
+        "QToolBar#editorToolbar QToolButton {"
         "    background-color: #2B2D30;"
         "    border: 1px solid #3A3D42;"
-        "    border-radius: 6px;"
+        "    border-radius: 8px;"
         "    padding: 4px 10px;"
         "    color: #F0F0F0;"
         "}"
-        "QToolBar QToolButton:hover {"
+        "QToolBar#editorToolbar QToolButton:hover {"
         "    background-color: #34373C;"
         "}"
-        "QToolBar QToolButton:pressed {"
+        "QToolBar#editorToolbar QToolButton:pressed {"
         "    background-color: #3A3D42;"
         "}"
-        "QToolBar QToolButton#btnRun {"
+        "QToolBar#editorToolbar QToolButton#btnRun {"
         "    background-color: #3FB950;"
         "    border: 1px solid #2F9E44;"
         "    color: #FFFFFF;"
         "    font-weight: 600;"
         "}"
-        "QToolBar QToolButton#btnRun:hover {"
+        "QToolBar#editorToolbar QToolButton#btnRun:hover {"
         "    background-color: #4AC45C;"
         "    border: 1px solid #3FB950;"
         "}"
-        "QToolBar QToolButton#btnRun:pressed {"
+        "QToolBar#editorToolbar QToolButton#btnRun:pressed {"
         "    background-color: #2F9E44;"
         "}"
-        "QToolBar::separator {"
+        "QToolBar#editorToolbar::separator {"
         "    width: 1px;"
         "    background-color: #3A3D42;"
         "    margin: 4px 2px;"

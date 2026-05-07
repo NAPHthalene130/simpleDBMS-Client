@@ -18,12 +18,17 @@ TerminalWidget::TerminalWidget(MainWindow *mainWindow, QWidget *parent)
     auto *inputLayout = new QHBoxLayout();
     // 作者：YuzhSong
     // 仅优化终端面板的边距与间距，不影响 SQL 提交与回显链路。
-    layout->setContentsMargins(6, 6, 6, 6);
-    layout->setSpacing(6);
-    inputLayout->setSpacing(6);
+    // 作者：YuzhSong
+    // 终端面板内部采用统一 8px 边距与 4px 间距，使输入区与输出区边缘更规整，和主布局节奏一致。
+    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setSpacing(4);
+    inputLayout->setSpacing(4);
 
     outputTextEdit->setReadOnly(true);
     outputTextEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
+    outputTextEdit->setObjectName("terminalOutputTextEdit");
+    inputLineEdit->setObjectName("terminalInputLineEdit");
+    executeButton->setObjectName("terminalExecuteButton");
     inputLineEdit->setPlaceholderText(tr("Input SQL and press Enter or Execute..."));
 
     inputLayout->addWidget(inputLineEdit, 1);
@@ -86,30 +91,37 @@ void TerminalWidget::applyTerminalStyle()
 {
     // 作者：YuzhSong
     // 统一终端样式为深灰主题，并增强输入区、按钮和边框层次，不改动 submit/append 逻辑。
+    // 作者：YuzhSong
+    // TerminalWidget 外层即主面板，内部输出与输入仅保留弱边框，降低套娃感并统一 IDE 深色层级。
     setStyleSheet(
-        "QWidget { background-color: #202124; color: #F0F0F0; border-radius: 8px; }"
-        "QPlainTextEdit {"
-        "  background-color: #1E1F22;"
-        "  color: #F0F0F0;"
-        "  border: 1px solid #3A3D42;"
-        "  border-radius: 6px;"
-        "  selection-background-color: #3D6FB6;"
-        "}"
-        "QLineEdit {"
+        "TerminalWidget {"
         "  background-color: #252629;"
         "  color: #F0F0F0;"
         "  border: 1px solid #3A3D42;"
-        "  border-radius: 6px;"
+        "  border-radius: 14px;"
+        "}"
+        "QPlainTextEdit#terminalOutputTextEdit {"
+        "  background-color: #1E1F22;"
+        "  color: #F0F0F0;"
+        "  border: 1px solid #2F3136;"
+        "  border-radius: 8px;"
+        "  selection-background-color: #3D6FB6;"
+        "}"
+        "QLineEdit#terminalInputLineEdit {"
+        "  background-color: #1F2023;"
+        "  color: #F0F0F0;"
+        "  border: 1px solid #3A3D42;"
+        "  border-radius: 8px;"
         "  padding: 5px 8px;"
         "}"
-        "QPushButton {"
+        "QPushButton#terminalExecuteButton {"
         "  background-color: #2B2D30;"
         "  color: #ffffff;"
         "  border: 1px solid #3A3D42;"
-        "  border-radius: 6px;"
+        "  border-radius: 8px;"
         "  padding: 5px 12px;"
         "}"
-        "QPushButton:hover {"
+        "QPushButton#terminalExecuteButton:hover {"
         "  background-color: #34373C;"
         "}"
     );

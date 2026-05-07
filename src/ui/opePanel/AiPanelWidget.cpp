@@ -37,8 +37,8 @@ void AiPanelWidget::initUI()
     mainLayout = new QVBoxLayout(this);
     // 作者：YuzhSong
     // 控制 AI 面板内边距与间距，保证右侧面板与主编辑区视觉一致。
-    mainLayout->setContentsMargins(12, 12, 12, 12);
-    mainLayout->setSpacing(10);
+    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(8);
 
     titleLabel = new QLabel(tr("AI Assistant"), this);
     placeholderLabel = new QLabel(tr("暂未实现"), this);
@@ -65,11 +65,15 @@ void AiPanelWidget::initStyle()
     setMaximumWidth(QWIDGETSIZE_MAX);
     // 作者：YuzhSong
     // AI 面板采用深灰背景 + 次级说明文本 + 轻微赛博感高亮，不引入业务逻辑。
+    // 作者：YuzhSong
+    // AI 面板采用统一圆角深色面板，弱化重边框，保持与 Editor/Directory/Terminal 一致的 IDE 视觉层级。
+    // 作者：YuzhSong
+    // 右侧 AI 面板圆角统一到 14px，与左侧/中间/底部面板保持一致的边缘语言。
     setStyleSheet(
         "AiPanelWidget {"
         "    background-color: #252629;"
         "    border: 1px solid #3A3D42;"
-        "    border-radius: 8px;"
+        "    border-radius: 14px;"
         "}"
         "QLabel {"
         "    color: #A8A8A8;"

@@ -55,8 +55,8 @@ MainWindow* DirectoryWidget::getMainWindow() const
 void DirectoryWidget::initUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(8, 8, 8, 8);
-    mainLayout->setSpacing(6);
+    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(8);
 
     auto* titleLabel = new QLabel(tr("已打开文件"), this);
     titleLabel->setObjectName("directoryTitleLabel");
@@ -78,11 +78,13 @@ void DirectoryWidget::initStyle()
 {
     // 作者：YuzhSong
     // 目录区仅做样式增强：深灰背景、边框、hover 与选中态统一，不改变文件激活逻辑。
+    // 作者：YuzhSong
+    // 面板圆角统一为 14px，内部列表仅保留弱边框和 8px 圆角，避免内部再形成突兀大框。
     setStyleSheet(
         "DirectoryWidget {"
         "    background-color: #252629;"
         "    border: 1px solid #3A3D42;"
-        "    border-radius: 8px;"
+        "    border-radius: 14px;"
         "}"
         "QLabel#directoryTitleLabel {"
         "    color: #F0F0F0;"
@@ -90,10 +92,10 @@ void DirectoryWidget::initStyle()
         "    padding-left: 2px;"
         "}"
         "QListWidget#directoryOpenedFileList {"
-        "    background-color: #202124;"
+        "    background-color: #1F2023;"
         "    color: #F0F0F0;"
-        "    border: 1px solid #3A3D42;"
-        "    border-radius: 6px;"
+        "    border: 1px solid #2F3136;"
+        "    border-radius: 8px;"
         "    outline: none;"
         "}"
         "QListWidget#directoryOpenedFileList::item {"
