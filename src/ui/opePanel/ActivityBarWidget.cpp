@@ -1,9 +1,8 @@
 /**
  * @file ActivityBarWidget.cpp
- * @brief IDE 风格左侧 ActivityBar 组件实现文件
- * @details 提供窄按钮栏，仅负责按钮展示和请求信号发射，不承担面板业务逻辑。
  * @author YuzhSong
- * @date 2026-05-07
+ * @brief IDE 左侧 ActivityBar 实现文件
+ * @details 仅负责按钮显示与请求信号，不处理具体面板布局逻辑
  * @module ui/opePanel
  */
 
@@ -15,7 +14,6 @@
 /**
  * @brief 构造函数
  * @param parent 父组件指针
- * @author YuzhSong
  */
 ActivityBarWidget::ActivityBarWidget(QWidget* parent)
     : QWidget(parent)
@@ -31,8 +29,7 @@ ActivityBarWidget::ActivityBarWidget(QWidget* parent)
 
 /**
  * @brief 初始化界面结构
- * @details ActivityBar 固定为窄栏，按钮按垂直方向排列。
- * @author YuzhSong
+ * @details ActivityBar 固定窄宽度，四个按钮自上而下排布
  */
 void ActivityBarWidget::initUI()
 {
@@ -52,6 +49,8 @@ void ActivityBarWidget::initUI()
     aiButton->setToolTip(tr("AI"));
     terminalButton->setToolTip(tr("Terminal"));
 
+    // 作者：YuzhSong
+    // 统一使用 checkable 按钮，让外部协调层可以直接映射“面板是否打开”的状态。
     fileButton->setCheckable(true);
     logButton->setCheckable(true);
     aiButton->setCheckable(true);
@@ -66,8 +65,7 @@ void ActivityBarWidget::initUI()
 
 /**
  * @brief 初始化样式
- * @details 采用深灰配色，使用 hover 与 checked 状态突出当前操作入口。
- * @author YuzhSong
+ * @details 保持深灰主题和轻微高亮，不破坏既有整体视觉风格
  */
 void ActivityBarWidget::initStyle()
 {
@@ -96,44 +94,64 @@ void ActivityBarWidget::initStyle()
 
 /**
  * @brief 初始化信号槽连接
- * @details 本组件只发出请求信号，真正的显示/隐藏逻辑由外部协调层处理。
- * @author YuzhSong
+ * @details 仅发出“请求”信号，真正显示/隐藏行为由 OpePanelWidget 协调
  */
 void ActivityBarWidget::initConnections()
 {
-    connect(fileButton, &QPushButton::clicked, this, [this]() {
-        emit filePanelRequested();
-    });
-
-    connect(logButton, &QPushButton::clicked, this, [this]() {
-        emit logPanelRequested();
-    });
-
-    connect(aiButton, &QPushButton::clicked, this, [this]() {
-        emit aiPanelRequested();
-    });
-
-    connect(terminalButton, &QPushButton::clicked, this, [this]() {
-        emit terminalPanelRequested();
-    });
+    connect(fileButton, &QPushButton::clicked, this, [this]() { emit filePanelRequested(); });
+    connect(logButton, &QPushButton::clicked, this, [this]() { emit logPanelRequested(); });
+    connect(aiButton, &QPushButton::clicked, this, [this]() { emit aiPanelRequested(); });
+    connect(terminalButton, &QPushButton::clicked, this, [this]() { emit terminalPanelRequested(); });
 }
 
 /**
- * @brief 同步按钮选中态
- * @details
- * 1. 本阶段仅同步 File / Log 选中态。
- * 2. AI / Terminal 暂不接入真实面板逻辑，默认保持未选中。
- * @param fileActive File 按钮是否高亮
- * @param logActive Log 按钮是否高亮
- * @author YuzhSong
+ * @brief 同步 File 按钮选中状态
+ * @param checked true 表示 File 面板打开
  */
-void ActivityBarWidget::updateSelectionState(bool fileActive, bool logActive)
+void ActivityBarWidget::setFileChecked(bool checked)
 {
-    fileButton->setChecked(fileActive);
-    logButton->setChecked(logActive);
+    fileButton->setChecked(checked);
+}
 
-    // 预留按钮暂不接入真实逻辑，避免误导用户产生“已实现面板”的认知。
-    aiButton->setChecked(false);
-    terminalButton->setChecked(false);
+/**
+ * @brief 同步 Log 按钮选中状态
+ * @param checked true 表示 Log 面板打开
+ */
+void ActivityBarWidget::setLogChecked(bool checked)
+{
+    logButton->setChecked(checked);
+}
+
+/**
+ * @brief 同步 AI 按钮选中状态
+ * @param checked true 表示 AI 面板打开
+ */
+void ActivityBarWidget::setAiChecked(bool checked)
+{
+    aiButton->setChecked(checked);
+}
+
+/**
+ * @brief 同步 Terminal 按钮选中状态
+ * @param checked true 表示 Terminal 面板打开
+ */
+void ActivityBarWidget::setTerminalChecked(bool checked)
+{
+    terminalButton->setChecked(checked);
+}
+
+/**
+ * @brief 批量同步四个按钮状态
+ * @param fileActive File 按钮状态
+ * @param logActive Log 按钮状态
+ * @param aiActive AI 按钮状态
+ * @param terminalActive Terminal 按钮状态
+ */
+void ActivityBarWidget::updateSelectionState(bool fileActive, bool logActive, bool aiActive, bool terminalActive)
+{
+    setFileChecked(fileActive);
+    setLogChecked(logActive);
+    setAiChecked(aiActive);
+    setTerminalChecked(terminalActive);
 }
 
