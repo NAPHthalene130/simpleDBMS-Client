@@ -110,15 +110,15 @@ void OpePanelWidget::initStyle()
     // 统一将容器底色设置为 #363636，布局间距区域自然呈现“缝隙分隔”效果；分割条保持 4px、低亮度深灰。
     setStyleSheet(QString(
         "QWidget {"
-        "    background-color: #26282C;"
+        "    background-color: #2B2B2B;"
         "    color: #F0F0F0;"
         "}"
         "QSplitter::handle {"
-        "    background-color: #26282C;"
+        "    background-color: #2B2B2B;"
         "    border-radius: 2px;"
         "}"
         "QSplitter::handle:hover {"
-        "    background-color: #34373C;"
+        "    background-color: #353638;"
         "}"
     ));
 }

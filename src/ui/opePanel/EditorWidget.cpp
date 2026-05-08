@@ -88,7 +88,7 @@ void EditorWidget::initUI()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     // 作者：YuzhSong
     // 工具栏与编辑区间使用细间隙衔接，保持一体化面板观感同时保留轻微层次分界。
-    mainLayout->setSpacing(2);
+    mainLayout->setSpacing(0);
 
     toolbar = new QToolBar(this);
     toolbar->setToolButtonStyle(Qt::ToolButtonTextOnly);
@@ -100,12 +100,12 @@ void EditorWidget::initUI()
     // 仅统一工具栏视觉样式，不修改新建/打开/保存/运行及目录开关的业务行为。
     toolbar->setStyleSheet(
         "EditorWidget#editorWidgetRoot {"
-        "    background-color: #252629;"
-        "    border: 1px solid #3A3D42;"
+        "    background-color: #111315;"
+        "    border: 1px solid #1B1D20;"
         "    border-radius: 14px;"
         "}"
         "QToolBar#editorToolbar {"
-        "    background-color: #202124;"
+        "    background-color: #111315;"
         "    border: none;"
         "    border-top-left-radius: 14px;"
         "    border-top-right-radius: 14px;"
@@ -113,17 +113,17 @@ void EditorWidget::initUI()
         "    spacing: 4px;"
         "}"
         "QToolBar#editorToolbar QToolButton {"
-        "    background-color: #2B2D30;"
-        "    border: 1px solid #3A3D42;"
+        "    background-color: #1A1C1E;"
+        "    border: 1px solid #1B1D20;"
         "    border-radius: 8px;"
         "    padding: 4px 10px;"
         "    color: #F0F0F0;"
         "}"
         "QToolBar#editorToolbar QToolButton:hover {"
-        "    background-color: #34373C;"
+        "    background-color: #25292D;"
         "}"
         "QToolBar#editorToolbar QToolButton:pressed {"
-        "    background-color: #3A3D42;"
+        "    background-color: #2D3135;"
         "}"
         "QToolBar#editorToolbar QToolButton#btnRun {"
         "    background-color: #3FB950;"
@@ -140,12 +140,23 @@ void EditorWidget::initUI()
         "}"
         "QToolBar#editorToolbar::separator {"
         "    width: 1px;"
-        "    background-color: #3A3D42;"
+        "    background-color: #1B1D20;"
         "    margin: 4px 2px;"
+        "}"
+        "QWidget#editorToolbarSpacer {"
+        "    background-color: #111315;"
+        "    border: none;"
+        "}"
+        "QPlainTextEdit#editorSqlInput {"
+        "    background-color: #111315;"
+        "    border: none;"
+        "    border-bottom-left-radius: 14px;"
+        "    border-bottom-right-radius: 14px;"
         "}"
     );
 
     sqlEditor = new SqlEditor(this);
+    sqlEditor->setObjectName("editorSqlInput");
     mainLayout->addWidget(toolbar);
     mainLayout->addWidget(sqlEditor, 1);
     setLayout(mainLayout);
@@ -214,6 +225,7 @@ void EditorWidget::setupToolbar()
     // 作者：YuzhSong
     // 在左侧文件操作按钮与右侧 Run 按钮之间加入弹性间隔，使 Run 固定靠右显示。
     QWidget* stretchWidget = new QWidget(this);
+    stretchWidget->setObjectName("editorToolbarSpacer");
     stretchWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     toolbar->addWidget(stretchWidget);
 

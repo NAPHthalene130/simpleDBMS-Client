@@ -35,18 +35,18 @@ void ActivityBarWidget::initUI()
 {
     // 作者：YuzhSong
     // ActivityBar 固定为窄竖栏，严格贴合草图中的 56px 宽度。
-    setFixedWidth(56);
+    setFixedWidth(35);
 
     auto* mainLayout = new QVBoxLayout(this);
     // 作者：YuzhSong
     // 调整 ActivityBar 留白，增强与侧边面板和编辑区的视觉分层。
-    mainLayout->setContentsMargins(8, 8, 8, 8);
-    mainLayout->setSpacing(6);
+    mainLayout->setContentsMargins(2, 8, 2, 8);
+    mainLayout->setSpacing(8);
 
-    fileButton = new QPushButton(tr("File"), this);
-    logButton = new QPushButton(tr("Log"), this);
-    aiButton = new QPushButton(tr("AI"), this);
-    terminalButton = new QPushButton(tr("Term"), this);
+    fileButton = new QPushButton(tr("F"), this);
+    logButton = new QPushButton(tr("L"), this);
+    aiButton = new QPushButton(tr("A"), this);
+    terminalButton = new QPushButton(tr("T"), this);
 
     fileButton->setToolTip(tr("File"));
     logButton->setToolTip(tr("Log"));
@@ -59,6 +59,10 @@ void ActivityBarWidget::initUI()
     logButton->setCheckable(true);
     aiButton->setCheckable(true);
     terminalButton->setCheckable(true);
+    fileButton->setFixedSize(30, 30);
+    logButton->setFixedSize(30, 30);
+    aiButton->setFixedSize(30, 30);
+    terminalButton->setFixedSize(30, 30);
 
     mainLayout->addWidget(fileButton);
     mainLayout->addWidget(logButton);
@@ -79,26 +83,27 @@ void ActivityBarWidget::initStyle()
     // 统一左侧活动栏为深灰底色，hover 轻微提亮，checked 使用低饱和蓝色高亮。
     setStyleSheet(
         "ActivityBarWidget {"
-        "    background-color: #26282C;"
-        "    border: none;"
+        "    background-color: #111315;"
+        "    border: 1px solid #1B1D20;"
         "    border-radius: 14px;"
         "}"
         "QPushButton {"
-        "    min-height: 32px;"
+        "    min-width: 30px;"
+        "    min-height: 30px;"
         "    border: 1px solid transparent;"
-        "    border-radius: 8px;"
-        "    background-color: #1F2023;"
+        "    border-radius: 7px;"
+        "    background-color: #1A1C1E;"
         "    color: #C8CBD2;"
         "    font-weight: 600;"
         "    font-size: 11px;"
         "}"
         "QPushButton:hover {"
-        "    background-color: #2B2D30;"
-        "    border-color: #3A3D42;"
+        "    background-color: #26292D;"
+        "    border-color: #2B3035;"
         "}"
         "QPushButton:checked {"
-        "    background-color: #355F9A;"
-        "    border: 1px solid #4A83D6;"
+        "    background-color: #2F64A8;"
+        "    border: 1px solid #2F64A8;"
         "    color: #FFFFFF;"
         "}"
     );

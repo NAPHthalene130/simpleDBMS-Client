@@ -10,6 +10,7 @@
 
 #include <QLabel>
 #include <QPushButton>
+#include <QSizePolicy>
 #include <QVBoxLayout>
 
 SettingWidget::SettingWidget(MainWindow *mainWindow, QWidget *parent)
@@ -45,14 +46,16 @@ void SettingWidget::initUI()
     titleLabel->setObjectName("settingTitleLabel");
     descriptionLabel->setObjectName("settingDescriptionLabel");
     descriptionLabel->setWordWrap(true);
+    descriptionLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    descriptionLabel->setMinimumHeight(44);
 
     logoutButton->setObjectName("logoutButton");
     logoutButton->setCursor(Qt::PointingHandCursor);
     logoutButton->setFixedHeight(38);
-    logoutButton->setFixedWidth(140);
+    logoutButton->setMinimumWidth(160);
 
     layout->addWidget(titleLabel, 0, Qt::AlignLeft);
-    layout->addWidget(descriptionLabel, 0, Qt::AlignLeft);
+    layout->addWidget(descriptionLabel);
     layout->addSpacing(16);
     layout->addWidget(logoutButton, 0, Qt::AlignLeft);
     layout->addStretch(1);

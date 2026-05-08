@@ -140,7 +140,7 @@ void MainWindow::initStyle()
 {
     setStyleSheet(QString(
         "QMainWindow {"
-        "    background-color: #1E1E1E;"
+        "    background-color: #2B2B2B;"
         "}"
     ));
 }

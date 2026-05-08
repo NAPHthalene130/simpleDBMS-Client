@@ -45,6 +45,13 @@ SqlEditor::SqlEditor(QWidget* parent)
     // 设置等宽字体，适合代码编辑
     QFont editorFont("Consolas", 12);
     setFont(editorFont);
+    setStyleSheet(
+        "QPlainTextEdit {"
+        "    background-color: #111315;"
+        "    color: #E6E6E6;"
+        "    border: none;"
+        "}"
+    );
 
     // 设置 Tab 宽度为 4 个空格
     setTabStopDistance(4 * fontMetrics().horizontalAdvance(' '));
@@ -580,7 +587,7 @@ void SqlEditor::highlightCurrentLine()
         QTextEdit::ExtraSelection selection;
 
         // 设置高亮背景色（中灰色，柔和不刺眼）
-        QColor lineColor = QColor("#4A4A4A");
+        QColor lineColor = QColor("#1A1F26");
 
         // 设置选择格式
         selection.format.setBackground(lineColor);
@@ -635,7 +642,7 @@ void SqlEditor::lineNumberAreaPaintEvent(QPaintEvent* event)
     QPainter painter(lineNumberArea);
 
     // 填充行号区域背景（深灰色，与编辑器背景一致）
-    painter.fillRect(event->rect(), QColor("#2B2B2B"));
+    painter.fillRect(event->rect(), QColor("#5A5A5A"));
 
     // 获取可见的第一个文本块
     QTextBlock block = firstVisibleBlock();
@@ -667,7 +674,7 @@ void SqlEditor::lineNumberAreaPaintEvent(QPaintEvent* event)
                 boldFont.setBold(true);
                 painter.setFont(boldFont);
             } else {
-                painter.setPen(QColor("#FFFFFF"));
+                painter.setPen(QColor("#DADADA"));
             }
 
             // 绘制行号文本（右对齐）

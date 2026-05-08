@@ -21,6 +21,7 @@ TopNavigationWidget::TopNavigationWidget(QWidget *parent)
     , userNamePrefixLabel(new QLabel(tr("用户："), this))
     , userNameValueLabel(new QLabel(tr("Guest"), this))
 {
+    setAttribute(Qt::WA_StyledBackground, true);
     initUI();
     initStyle();
     initConnections();
@@ -53,10 +54,10 @@ void TopNavigationWidget::initUI()
 {
     // 作者：YuzhSong
     // 标签页需要上圆角与下方内容区连通，因此提高导航栏高度，给标签留出稳定的视觉空间。
-    setFixedHeight(56);
+    setFixedHeight(35);
 
     auto *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(14, 8, 14, 0);
+    layout->setContentsMargins(12, 2, 12, 0);
     layout->setSpacing(8);
 
     brandLabel->setObjectName("topNavBrandLabel");
@@ -92,8 +93,11 @@ void TopNavigationWidget::initStyle()
     // 作者：YuzhSong
     // 通过“选中标签底边与内容区同色”建立视觉连通，形成 IDE/浏览器标签页风格而非普通按钮风格。
     setStyleSheet(QString(
+        "TopNavigationWidget {"
+        "    background-color: #111315;"
+        "}"
         "QWidget {"
-        "    background-color: #1B1D20;"
+        "    background-color: #111315;"
         "    color: #F0F0F0;"
         "    border: none;"
         "}"
@@ -104,24 +108,27 @@ void TopNavigationWidget::initStyle()
         "    letter-spacing: 0;"
         "}"
         "QTabBar#topNavTabBar::tab {"
-        "    background-color: #242527;"
+        "    background-color: #111315;"
         "    color: #A8A8A8;"
         "    border: 1px solid #2F3136;"
-        "    border-bottom: 1px solid #2F3136;"
+        "    border-bottom: 1px solid #111315;"
         "    border-top-left-radius: 11px;"
         "    border-top-right-radius: 11px;"
+        "    min-width: 70px;"
+        "    max-width: 70px;"
+        "    qproperty-alignment: AlignCenter;"
         "    padding: 7px 15px;"
         "    margin-right: 4px;"
         "    font-size: 13px;"
         "}"
         "QTabBar#topNavTabBar::tab:hover {"
-        "    background-color: #2C2F34;"
+        "    background-color: #111315;"
         "    color: #E6E6E6;"
         "}"
         "QTabBar#topNavTabBar::tab:selected {"
-        "    background-color: #2B2D30;"
-        "    border: 1px solid #3A3D42;"
-        "    border-bottom-color: #2B2D30;"
+        "    background-color: #2B2B2B;"
+        "    border: 1px solid #1B1D20;"
+        "    border-bottom-color: #2B2B2B;"
         "    color: #FFFFFF;"
         "    font-weight: 700;"
         "}"
@@ -133,7 +140,7 @@ void TopNavigationWidget::initStyle()
         "    color: #F0F0F0;"
         "    font-size: 12px;"
         "    font-weight: 600;"
-        "    background-color: #2B2D30;"
+        "    background-color: #111315;"
         "    border: 1px solid #3A3D42;"
         "    border-radius: 6px;"
         "    padding: 2px 8px;"
