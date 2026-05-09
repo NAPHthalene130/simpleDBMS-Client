@@ -1,11 +1,26 @@
 #include "TerminalWidget.h"
 
 #include <QDateTime>
+#include <QFont>
+#include <QFontDatabase>
 #include <QHBoxLayout>
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
+
+namespace {
+QString buildTerminalEntry(const QString &level, const QString &payload)
+{
+    const QString prefix = QString("[%1] [%2]")
+                               .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"))
+                               .arg(level);
+    if (payload.contains('\n')) {
+        return prefix + "\n" + payload;
+    }
+    return prefix + " " + payload;
+}
+} // namespace
 
 TerminalWidget::TerminalWidget(MainWindow *mainWindow, QWidget *parent)
     : QWidget(parent),
@@ -30,6 +45,10 @@ TerminalWidget::TerminalWidget(MainWindow *mainWindow, QWidget *parent)
     inputLineEdit->setObjectName("terminalInputLineEdit");
     executeButton->setObjectName("terminalExecuteButton");
     inputLineEdit->setPlaceholderText(tr("Input SQL and press Enter or Execute..."));
+    QFont fixedFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    fixedFont.setStyleHint(QFont::Monospace);
+    outputTextEdit->setFont(fixedFont);
+    inputLineEdit->setFont(fixedFont);
 
     inputLayout->setContentsMargins(0, 0, 0, 0);
     inputLayout->addWidget(inputLineEdit, 1);
@@ -59,16 +78,12 @@ void TerminalWidget::appendCommand(const QString &sql)
 
 void TerminalWidget::appendMessage(const QString &message)
 {
-    outputTextEdit->appendPlainText(QString("[%1] [INFO] %2")
-                                        .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"))
-                                        .arg(message));
+    outputTextEdit->appendPlainText(buildTerminalEntry("INFO", message));
 }
 
 void TerminalWidget::appendError(const QString &error)
 {
-    outputTextEdit->appendPlainText(QString("[%1] [ERROR] %2")
-                                        .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"))
-                                        .arg(error));
+    outputTextEdit->appendPlainText(buildTerminalEntry("ERROR", error));
 }
 
 void TerminalWidget::clearTerminal()

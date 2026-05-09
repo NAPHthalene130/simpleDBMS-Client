@@ -1,10 +1,13 @@
 #include "NetReceiver.h"
 
+#include <algorithm>
 #include <array>
+#include <vector>
 
 #include <asio/read.hpp>
 #include <QMetaObject>
 #include <QString>
+#include <QStringList>
 
 #include "mainwindow.h"
 #include "NetworkManager.h"
@@ -38,30 +41,76 @@ QString buildQueryResultText(const NetworkTransferData &networkTransferData)
         return buildMessageText(networkTransferData);
     }
 
-    QString result;
+    std::size_t columnCount = columns.size();
+    for (const auto &row : rows) {
+        columnCount = std::max(columnCount, row.size());
+    }
 
+    if (columnCount == 0) {
+        return buildMessageText(networkTransferData);
+    }
+
+    std::vector<int> columnWidths(columnCount, 0);
+    QStringList headerCells;
     if (!columns.empty()) {
-        QStringList columnList;
-        for (const auto &col : columns) {
-            columnList.append(QString::fromStdString(col));
+        headerCells.reserve(static_cast<qsizetype>(columnCount));
+        for (std::size_t i = 0; i < columnCount; ++i) {
+            const QString headerCell =
+                i < columns.size() ? QString::fromStdString(columns[i]) : QString();
+            headerCells.append(headerCell);
+            columnWidths[i] = std::max(columnWidths[i], headerCell.size());
         }
-        result += columnList.join(" | ") + "\n";
-        result += QString("-").repeated(result.length()) + "\n";
     }
 
     for (const auto &row : rows) {
-        QStringList rowList;
-        for (const auto &cell : row) {
-            rowList.append(QString::fromStdString(cell));
+        for (std::size_t i = 0; i < columnCount; ++i) {
+            const QString cell = i < row.size() ? QString::fromStdString(row[i]) : QString();
+            columnWidths[i] = std::max(columnWidths[i], cell.size());
         }
-        result += rowList.join(" | ") + "\n";
+    }
+
+    auto formatCells = [&columnWidths](const QStringList &cells) {
+        QStringList paddedCells;
+        paddedCells.reserve(static_cast<qsizetype>(columnWidths.size()));
+        for (std::size_t i = 0; i < columnWidths.size(); ++i) {
+            const QString cell = i < static_cast<std::size_t>(cells.size()) ? cells[static_cast<qsizetype>(i)] : QString();
+            paddedCells.append(cell.leftJustified(columnWidths[i], ' '));
+        }
+        return paddedCells.join(" | ");
+    };
+
+    auto buildSeparator = [&columnWidths]() {
+        QStringList segments;
+        segments.reserve(static_cast<qsizetype>(columnWidths.size()));
+        for (const int width : columnWidths) {
+            segments.append(QString("-").repeated(std::max(width, 1)));
+        }
+        return segments.join("-+-");
+    };
+
+    QStringList lines;
+    if (!columns.empty()) {
+        lines.append(formatCells(headerCells));
+        lines.append(buildSeparator());
+    }
+
+    for (const auto &row : rows) {
+        QStringList rowCells;
+        rowCells.reserve(static_cast<qsizetype>(columnCount));
+        for (std::size_t i = 0; i < columnCount; ++i) {
+            rowCells.append(i < row.size() ? QString::fromStdString(row[i]) : QString());
+        }
+        lines.append(formatCells(rowCells));
     }
 
     if (!networkTransferData.getMessage().empty()) {
-        result += "\n" + QString::fromStdString(networkTransferData.getMessage());
+        if (!lines.isEmpty()) {
+            lines.append(QString());
+        }
+        lines.append(QString::fromStdString(networkTransferData.getMessage()));
     }
 
-    return result.trimmed();
+    return lines.join("\n").trimmed();
 }
 } // namespace
 
