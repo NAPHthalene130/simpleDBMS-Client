@@ -1,0 +1,119 @@
+#pragma once
+
+#include <array>
+#include <atomic>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+
+#include <QString>
+
+#include <asio/ip/tcp.hpp>
+
+class MainWindow;
+class NetworkTransferData;
+class TerminalWidget;
+
+/**
+ * @class NetReceiver
+ * @brief 客户端网络接收服务类
+ * @details 负责从客户端维护的单个服务端套接字中按"4 字节长度 + 消息体"的协议读取消息，
+ *          并根据响应类型将结果分发到对应的界面组件。
+ * @author NAPH130
+ */
+class NetReceiver
+{
+public:
+    /**
+     * @brief 构造函数
+     * @author NAPH130
+     * @param mainWindow 主窗口指针，用于后续与界面层联动
+     */
+    explicit NetReceiver(MainWindow *mainWindow);
+
+    /**
+     * @brief 析构函数
+     * @author NAPH130
+     */
+    ~NetReceiver();
+
+    /**
+     * @brief 启动接收服务
+     * @author NAPH130
+     */
+    void start();
+
+    /**
+     * @brief 停止接收服务
+     * @author NAPH130
+     */
+    void stop();
+
+    /**
+     * @brief 处理最终接收到的完整消息
+     * @author NAPH130
+     * @param networkTransferData 最终处理后的网络传输数据
+     */
+    void processMsg(const NetworkTransferData &networkTransferData);
+
+    /**
+     * @brief 获取最近一次处理的消息内容
+     * @author NAPH130
+     * @return 最近一次处理的消息
+     */
+    std::string getLastReceivedMessage() const;
+
+private:
+    /**
+     * @brief 执行接收服务主循环
+     * @author NAPH130
+     */
+    void runService();
+
+    /**
+     * @brief 处理与服务端的单个会话
+     * @author NAPH130
+     * @param serverSocket 服务端套接字
+     */
+    void handleServerSession(std::shared_ptr<asio::ip::tcp::socket> serverSocket);
+
+    /**
+     * @brief 解析 4 字节长度前缀
+     * @author NAPH130
+     * @param lengthHeader 长度前缀字节数组
+     * @return 消息体长度
+     */
+    std::uint32_t parseLengthHeader(const std::array<unsigned char, 4> &lengthHeader) const;
+
+    /**
+     * @brief 获取终端组件指针
+     * @author NAPH130
+     * @return 终端组件指针，可能为空
+     */
+    TerminalWidget *getTerminalWidget() const;
+
+    /**
+     * @brief 安全地在主线程追加终端输出
+     * @author NAPH130
+     * @param terminalWidget 终端组件指针
+     * @param action 终端操作回调
+     */
+    void invokeTerminalAppend(TerminalWidget *terminalWidget,
+                              const std::function<void(TerminalWidget *)> &action);
+
+    /**
+     * @brief 以属性方式暂存消息（兼容旧行为）
+     * @author NAPH130
+     * @param messageText 消息文本
+     */
+    void storeAsProperty(const QString &messageText);
+
+    MainWindow *mainWindow;
+    std::atomic<bool> isRunning;
+    std::thread serviceThread;
+    mutable std::mutex messageMutex;
+    std::string lastReceivedMessage;
+};
