@@ -58,14 +58,14 @@ QString buildQueryResultText(const NetworkTransferData &networkTransferData)
             const QString headerCell =
                 i < columns.size() ? QString::fromStdString(columns[i]) : QString();
             headerCells.append(headerCell);
-            columnWidths[i] = std::max(columnWidths[i], headerCell.size());
+            columnWidths[i] = std::max(columnWidths[i], static_cast<int>(headerCell.size()));
         }
     }
 
     for (const auto &row : rows) {
         for (std::size_t i = 0; i < columnCount; ++i) {
             const QString cell = i < row.size() ? QString::fromStdString(row[i]) : QString();
-            columnWidths[i] = std::max(columnWidths[i], cell.size());
+            columnWidths[i] = std::max(columnWidths[i], static_cast<int>(cell.size()));
         }
     }
 
