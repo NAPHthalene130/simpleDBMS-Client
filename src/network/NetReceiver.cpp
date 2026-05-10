@@ -13,6 +13,7 @@
 #include "NetworkManager.h"
 #include "models/network/NetworkTransferData.h"
 #include "ui/OpePanelWidget.h"
+#include "ui/opePanel/TableWidget.h"
 #include "ui/opePanel/TerminalWidget.h"
 
 namespace {
@@ -30,6 +31,15 @@ QString buildMessageText(const NetworkTransferData &networkTransferData)
         return QString::fromStdString(networkTransferData.getMessage());
     }
     return QString::fromStdString(networkTransferData.toJson());
+}
+
+QString buildExecResultText(const NetworkTransferData &networkTransferData)
+{
+    QString text = buildMessageText(networkTransferData);
+    if (networkTransferData.getSuccess()) {
+        text += QString(" (Affected rows: %1)").arg(networkTransferData.getAffectedRows());
+    }
+    return text;
 }
 
 QString buildQueryResultText(const NetworkTransferData &networkTransferData)
@@ -165,7 +175,7 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
     auto *terminalWidget = getTerminalWidget();
 
     if (networkTransferData.getType() == NetworkTransferData::SQL_EXEC_RESPONSE) {
-        const QString msg = buildMessageText(networkTransferData);
+        const QString msg = buildExecResultText(networkTransferData);
         if (networkTransferData.getSuccess()) {
             invokeTerminalAppend(
                 terminalWidget,
@@ -181,9 +191,28 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
     if (networkTransferData.getType() == NetworkTransferData::SQL_QUERY_RESPONSE) {
         const QString text = buildQueryResultText(networkTransferData);
         if (networkTransferData.getSuccess()) {
-            invokeTerminalAppend(
-                terminalWidget,
-                [text](TerminalWidget *tw) { tw->appendMessage(text); });
+            const std::vector<std::string> columns = networkTransferData.getColumns();
+            const std::vector<std::vector<std::string>> rows = networkTransferData.getRows();
+            QMetaObject::invokeMethod(
+                mainWindow,
+                [window = mainWindow, terminalWidget, text, columns, rows]() {
+                    if (window == nullptr) {
+                        return;
+                    }
+
+                    OpePanelWidget *opePanelWidget = window->getOpePanelWidget();
+                    if (opePanelWidget != nullptr) {
+                        TableWidget *tableWidget = opePanelWidget->getTableWidget();
+                        if (tableWidget != nullptr) {
+                            tableWidget->setQueryResult(columns, rows);
+                        }
+                    }
+
+                    if (terminalWidget != nullptr) {
+                        terminalWidget->appendMessage(text);
+                    }
+                },
+                Qt::QueuedConnection);
         } else {
             invokeTerminalAppend(
                 terminalWidget,
