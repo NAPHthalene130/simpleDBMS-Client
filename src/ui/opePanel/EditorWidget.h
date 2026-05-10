@@ -2,7 +2,7 @@
  * @file EditorWidget.h
  * @brief SQL 编辑器主组件头文件
  * @details 该组件仅负责编辑区与文件编辑业务：打开、保存、另存为、运行 SQL、维护当前文件路径。
- *          左侧导航（已打开文件列表）由 DirectoryWidget 负责，二者通过信号槽协作。
+ *          左侧导航（已打开文件列表）由 FileWidget 负责，二者通过信号槽协作。
  * @author YuzhSong
  * @date 2026-04-26
  */
@@ -21,7 +21,7 @@ class SqlEditor;
  * @class EditorWidget
  * @brief SQL 编辑器组件
  * @details 该类只关注“当前编辑文件”的编辑与执行流程，不包含左侧文件导航 UI。
- *          通过 fileOpened/currentFileChanged 通知外部更新 DirectoryWidget。
+ *          通过 fileOpened/currentFileChanged 通知外部更新 FileWidget。
  * @author YuzhSong
  */
 class EditorWidget : public QWidget {
@@ -69,7 +69,7 @@ public slots:
 signals:
     /**
      * @brief 文件打开成功信号
-     * @details 用于通知 DirectoryWidget 将文件加入“已打开文件”列表。
+     * @details 用于通知 FileWidget 将文件加入“已打开文件”列表。
      * @author YuzhSong
      * @param filePath 打开成功的文件完整路径
      */
@@ -77,7 +77,7 @@ signals:
 
     /**
      * @brief 当前文件变化信号
-     * @details 用于通知 DirectoryWidget 更新选中项。
+     * @details 用于通知 FileWidget 更新选中项。
      * @author YuzhSong
      * @param filePath 当前编辑文件完整路径
      */

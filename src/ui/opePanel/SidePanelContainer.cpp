@@ -1,48 +1,36 @@
 /**
  * @file SidePanelContainer.cpp
- * @brief 左侧宽面板容器组件实现文件
- * @details 负责 DirectoryWidget / LogWidget 切换与面板收起逻辑，不承载业务逻辑。
  * @author YuzhSong
- * @date 2026-05-07
+ * @brief 左侧宽面板容器实现文件
+ * @details 通过 QStackedWidget 管理 Directory/File/Log 三个互斥页面
  * @module ui/opePanel
  */
 
 #include "SidePanelContainer.h"
 
 #include "DirectoryWidget.h"
+#include "FileWidget.h"
 #include "LogWidget.h"
 
 #include <QSizePolicy>
 #include <QStackedWidget>
 #include <QVBoxLayout>
 
-/**
- * @brief 构造函数
- * @param mainWindow 主窗口指针
- * @param parent 父组件指针
- * @author YuzhSong
- */
 SidePanelContainer::SidePanelContainer(MainWindow* mainWindow, QWidget* parent)
     : QWidget(parent)
     , mainWindow(mainWindow)
     , stackedWidget(nullptr)
     , m_directoryWidget(nullptr)
+    , m_fileWidget(nullptr)
     , m_logWidget(nullptr)
-    , m_currentPanelType(PanelType::File)
+    , m_currentPanelType(PanelType::Directory)
     , m_panelVisible(true)
 {
     initUI();
     initStyle();
-    showFilePanel();
+    showDirectoryPanel();
 }
 
-/**
- * @brief 初始化界面结构
- * @details
- * 1. 使用 QStackedWidget 管理 File/Log 面板。
- * 2. 默认宽度为 IDE 常见侧栏宽度，且保留 setMinimumWidth(0) 以支持未来完全收起。
- * @author YuzhSong
- */
 void SidePanelContainer::initUI()
 {
     setMinimumWidth(0);
@@ -50,32 +38,25 @@ void SidePanelContainer::initUI()
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     auto* mainLayout = new QVBoxLayout(this);
-    // 作者：YuzhSong
-    // 左侧面板容器与外部区域保留小间距，贴近现代 IDE 视觉层次。
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
+    // 作者：YuzhSong
+    // QStackedWidget 是管理互斥面板的最直接方案，同一时刻只显示一个页面，符合本任务要求。
     stackedWidget = new QStackedWidget(this);
-    m_directoryWidget = new DirectoryWidget(mainWindow, this);
+    m_directoryWidget = new DirectoryWidget(this);
+    m_fileWidget = new FileWidget(this);
     m_logWidget = new LogWidget(this);
 
     stackedWidget->addWidget(m_directoryWidget);
+    stackedWidget->addWidget(m_fileWidget);
     stackedWidget->addWidget(m_logWidget);
 
     mainLayout->addWidget(stackedWidget, 1);
 }
 
-/**
- * @brief 初始化样式
- * @details 面板维持深灰风格，避免与编辑区产生突兀视觉差异。
- * @author YuzhSong
- */
 void SidePanelContainer::initStyle()
 {
-    // 作者：YuzhSong
-    // SidePanel 统一深灰底与细边框，不改变 File/Log 切换逻辑。
-    // 作者：YuzhSong
-    // SidePanelContainer 仅作为 File/Log 切换容器保持透明，避免与子面板形成“套娃式双层边框”。
     setStyleSheet(
         "SidePanelContainer {"
         "    background-color: transparent;"
@@ -84,24 +65,22 @@ void SidePanelContainer::initStyle()
     );
 }
 
-/**
- * @brief 显示 File 面板
- * @details 切换到 DirectoryWidget，并确保容器处于可见状态。
- * @author YuzhSong
- */
-void SidePanelContainer::showFilePanel()
+void SidePanelContainer::showDirectoryPanel()
 {
     stackedWidget->setCurrentWidget(m_directoryWidget);
+    m_currentPanelType = PanelType::Directory;
+    m_panelVisible = true;
+    setVisible(true);
+}
+
+void SidePanelContainer::showFilePanel()
+{
+    stackedWidget->setCurrentWidget(m_fileWidget);
     m_currentPanelType = PanelType::File;
     m_panelVisible = true;
     setVisible(true);
 }
 
-/**
- * @brief 显示 Log 面板
- * @details 切换到 LogWidget，并确保容器处于可见状态。
- * @author YuzhSong
- */
 void SidePanelContainer::showLogPanel()
 {
     stackedWidget->setCurrentWidget(m_logWidget);
@@ -110,48 +89,33 @@ void SidePanelContainer::showLogPanel()
     setVisible(true);
 }
 
-/**
- * @brief 切换 File 面板（支持重复点击收起）
- * @details
- * 1. 如果当前已显示且当前面板是 File，则收起容器。
- * 2. 否则显示 File 面板。
- * @author YuzhSong
- */
+void SidePanelContainer::toggleDirectoryPanel()
+{
+    if (m_panelVisible && m_currentPanelType == PanelType::Directory) {
+        collapsePanel();
+        return;
+    }
+    showDirectoryPanel();
+}
+
 void SidePanelContainer::toggleFilePanel()
 {
     if (m_panelVisible && m_currentPanelType == PanelType::File) {
         collapsePanel();
         return;
     }
-
     showFilePanel();
 }
 
-/**
- * @brief 切换 Log 面板（支持重复点击收起）
- * @details
- * 1. 如果当前已显示且当前面板是 Log，则收起容器。
- * 2. 否则显示 Log 面板。
- * @author YuzhSong
- */
 void SidePanelContainer::toggleLogPanel()
 {
     if (m_panelVisible && m_currentPanelType == PanelType::Log) {
         collapsePanel();
         return;
     }
-
     showLogPanel();
 }
 
-/**
- * @brief 收起面板容器
- * @details
- * 1. 仅控制 SidePanelContainer 自身显示状态。
- * 2. 不销毁内部组件，便于下次快速恢复。
- * 3. 将 currentPanelType 置为 None，表示当前无激活面板。
- * @author YuzhSong
- */
 void SidePanelContainer::collapsePanel()
 {
     m_panelVisible = false;
@@ -159,42 +123,28 @@ void SidePanelContainer::collapsePanel()
     setVisible(false);
 }
 
-/**
- * @brief 判断面板容器是否可见
- * @return 可见返回 true，否则返回 false
- * @author YuzhSong
- */
 bool SidePanelContainer::isPanelVisible() const
 {
     return m_panelVisible && isVisible();
 }
 
-/**
- * @brief 获取目录面板组件
- * @return DirectoryWidget 指针
- * @author YuzhSong
- */
 DirectoryWidget* SidePanelContainer::directoryWidget() const
 {
     return m_directoryWidget;
 }
 
-/**
- * @brief 获取日志面板组件
- * @return LogWidget 指针
- * @author YuzhSong
- */
+FileWidget* SidePanelContainer::fileWidget() const
+{
+    return m_fileWidget;
+}
+
 LogWidget* SidePanelContainer::logWidget() const
 {
     return m_logWidget;
 }
 
-/**
- * @brief 获取当前激活面板类型
- * @return 当前面板类型
- * @author YuzhSong
- */
 SidePanelContainer::PanelType SidePanelContainer::currentPanelType() const
 {
     return m_currentPanelType;
 }
+

@@ -2,7 +2,7 @@
  * @file EditorWidget.cpp
  * @brief SQL 编辑器主组件实现文件
  * @details 负责编辑、文件打开/保存/另存为、运行当前 SQL。
- *          左侧导航由 DirectoryWidget 管理，本类通过信号通知外部协调层更新左侧列表。
+ *          左侧导航文件列表由 FileWidget 管理，本类通过信号通知外部协调层更新左侧列表。
  * @author YuzhSong
  * @date 2026-04-26
  */

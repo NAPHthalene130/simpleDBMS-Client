@@ -1,30 +1,33 @@
+/**
+ * @file DirectoryWidget.cpp
+ * @author YuzhSong
+ * @brief 左侧数据库目录树面板实现文件
+ * @details 当前阶段只实现前端数据库对象树与接口预留，不实现服务端元数据获取
+ * @module ui/opePanel
+ */
+
 #include "DirectoryWidget.h"
 
-#include <QAbstractItemView>
-#include <QDir>
-#include <QFileInfo>
+#include <QHeaderView>
 #include <QLabel>
-#include <QListWidget>
-#include <QListWidgetItem>
-#include <QSizePolicy>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 #include <QVBoxLayout>
 
-DirectoryWidget::DirectoryWidget(MainWindow* mainWindow, QWidget* parent)
-    : QWidget(parent)
-    , mainWindow(mainWindow)
-    , openedFileList(nullptr)
-{
-    setMinimumWidth(0);
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+namespace {
+constexpr int ItemTypeRole = Qt::UserRole + 1;
+constexpr int DbNameRole = Qt::UserRole + 2;
+constexpr int TableNameRole = Qt::UserRole + 3;
+}
 
+DirectoryWidget::DirectoryWidget(QWidget* parent)
+    : QWidget(parent)
+    , directoryTree(nullptr)
+{
     initUI();
     initStyle();
     initConnections();
-}
-
-MainWindow* DirectoryWidget::getMainWindow() const
-{
-    return mainWindow;
+    loadMockDirectory();
 }
 
 void DirectoryWidget::initUI()
@@ -33,20 +36,29 @@ void DirectoryWidget::initUI()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(10);
 
-    auto* titleLabel = new QLabel(tr("已打开文件"), this);
+    auto* titleLabel = new QLabel(tr("数据库目录"), this);
     titleLabel->setObjectName("directoryTitleLabel");
-    titleLabel->setMinimumWidth(0);
-    titleLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
-    openedFileList = new QListWidget(this);
-    openedFileList->setObjectName("directoryOpenedFileList");
-    openedFileList->setMinimumWidth(0);
-    openedFileList->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    openedFileList->setSelectionMode(QAbstractItemView::SingleSelection);
-    openedFileList->setAlternatingRowColors(true);
+    directoryTree = new QTreeWidget(this);
+    directoryTree->setObjectName("directoryTreeWidget");
+    directoryTree->setColumnCount(1);
+    directoryTree->setHeaderHidden(true);
+    directoryTree->setRootIsDecorated(true);
+    directoryTree->setUniformRowHeights(true);
+    directoryTree->setExpandsOnDoubleClick(true);
+    directoryTree->header()->setStretchLastSection(true);
 
     mainLayout->addWidget(titleLabel);
-    mainLayout->addWidget(openedFileList, 1);
+    mainLayout->addWidget(directoryTree, 1);
+}
+
+void DirectoryWidget::initConnections()
+{
+    // 作者：YuzhSong
+    // 当前只发出 table/column 激活信号做接口预留，不直接耦合 EditorWidget 业务逻辑。
+    connect(directoryTree, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem* item, int) {
+        handleItemDoubleClicked(item);
+    });
 }
 
 void DirectoryWidget::initStyle()
@@ -65,7 +77,7 @@ void DirectoryWidget::initStyle()
         "    border-radius: 8px;"
         "    padding: 8px 10px;"
         "}"
-        "QListWidget#directoryOpenedFileList {"
+        "QTreeWidget#directoryTreeWidget {"
         "    background-color: #111315;"
         "    color: #F0F0F0;"
         "    border: 1px solid #1B1D20;"
@@ -73,115 +85,168 @@ void DirectoryWidget::initStyle()
         "    padding: 6px;"
         "    outline: none;"
         "}"
-        "QListWidget#directoryOpenedFileList::item {"
-        "    min-height: 23px;"
-        "    max-height: 23px;"
-        "    padding: 4px 8px;"
+        "QTreeWidget#directoryTreeWidget::item {"
+        "    padding: 3px 6px;"
         "    margin: 1px 2px;"
         "    border-radius: 4px;"
         "}"
-        "QListWidget#directoryOpenedFileList::item:hover {"
+        "QTreeWidget#directoryTreeWidget::item:hover {"
         "    background-color: #34373C;"
         "}"
-        "QListWidget#directoryOpenedFileList::item:selected {"
+        "QTreeWidget#directoryTreeWidget::item:selected {"
         "    background-color: #2F64A8;"
         "    color: #FFFFFF;"
         "}"
     );
 }
 
-void DirectoryWidget::initConnections()
+void DirectoryWidget::clearDirectory()
 {
-    connect(openedFileList, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
-        if (!item) {
-            return;
-        }
-
-        const QString filePath = item->data(Qt::UserRole).toString();
-        if (!filePath.isEmpty()) {
-            emit fileActivated(filePath);
-        }
-    });
-
-    connect(openedFileList, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
-        if (!item) {
-            return;
-        }
-
-        const QString filePath = item->data(Qt::UserRole).toString();
-        if (!filePath.isEmpty()) {
-            emit fileActivated(filePath);
-        }
-    });
+    directoryTree->clear();
 }
 
-void DirectoryWidget::addOpenedFile(const QString& filePath)
+void DirectoryWidget::loadMockDirectory()
 {
-    const QString normalizedFilePath = normalizeFilePath(filePath);
-    if (normalizedFilePath.isEmpty()) {
+    // 作者：YuzhSong
+    // 当前阶段使用前端模拟树结构，后续由 refreshDirectory(服务端元数据) 替换。
+    clearDirectory();
+
+    auto* rootNode = new QTreeWidgetItem(directoryTree);
+    rootNode->setText(0, tr("simpleDBMS"));
+    rootNode->setData(0, ItemTypeRole, QStringLiteral("root"));
+
+    auto* databasesNode = new QTreeWidgetItem(rootNode);
+    databasesNode->setText(0, tr("databases"));
+    databasesNode->setData(0, ItemTypeRole, QStringLiteral("databases"));
+
+    QTreeWidgetItem* schoolNode = createDatabaseNode(databasesNode, QStringLiteral("school"));
+    QTreeWidgetItem* schoolTablesNode = schoolNode->child(0);
+    createTableNode(
+        schoolTablesNode,
+        QStringLiteral("school"),
+        QStringLiteral("student"),
+        {QStringLiteral("id : INT"), QStringLiteral("name : VARCHAR"), QStringLiteral("age : INT")}
+    );
+    createTableNode(
+        schoolTablesNode,
+        QStringLiteral("school"),
+        QStringLiteral("course"),
+        {QStringLiteral("id : INT"), QStringLiteral("title : VARCHAR"), QStringLiteral("credit : INT")}
+    );
+
+    QTreeWidgetItem* testDbNode = createDatabaseNode(databasesNode, QStringLiteral("test_db"));
+    QTreeWidgetItem* testTablesNode = testDbNode->child(0);
+    createTableNode(testTablesNode, QStringLiteral("test_db"), QStringLiteral("demo_table"), {QStringLiteral("id : INT")});
+
+    directoryTree->expandItem(rootNode);
+    directoryTree->expandItem(databasesNode);
+    directoryTree->expandItem(schoolNode);
+}
+
+void DirectoryWidget::refreshDirectory(const QStringList& databaseNames)
+{
+    // 作者：YuzhSong
+    // TODO：后续这里会接收服务端完整元数据（数据库/表/字段/索引等）并重建树结构。
+    // 当前先用简化数据库名列表占位，保证接口已预留且不影响编译。
+    clearDirectory();
+
+    auto* rootNode = new QTreeWidgetItem(directoryTree);
+    rootNode->setText(0, tr("simpleDBMS"));
+    rootNode->setData(0, ItemTypeRole, QStringLiteral("root"));
+
+    auto* databasesNode = new QTreeWidgetItem(rootNode);
+    databasesNode->setText(0, tr("databases"));
+    databasesNode->setData(0, ItemTypeRole, QStringLiteral("databases"));
+
+    for (const QString& dbName : databaseNames) {
+        createDatabaseNode(databasesNode, dbName);
+    }
+
+    directoryTree->expandItem(rootNode);
+    directoryTree->expandItem(databasesNode);
+}
+
+QTreeWidgetItem* DirectoryWidget::createDatabaseNode(QTreeWidgetItem* root, const QString& databaseName)
+{
+    auto* dbNode = new QTreeWidgetItem(root);
+    dbNode->setText(0, databaseName);
+    dbNode->setData(0, ItemTypeRole, QStringLiteral("database"));
+    dbNode->setData(0, DbNameRole, databaseName);
+
+    auto* tablesNode = new QTreeWidgetItem(dbNode);
+    tablesNode->setText(0, tr("Tables"));
+    tablesNode->setData(0, ItemTypeRole, QStringLiteral("tables"));
+    tablesNode->setData(0, DbNameRole, databaseName);
+
+    auto* viewsNode = new QTreeWidgetItem(dbNode);
+    viewsNode->setText(0, tr("Views"));
+    viewsNode->setData(0, ItemTypeRole, QStringLiteral("views"));
+    viewsNode->setData(0, DbNameRole, databaseName);
+
+    auto* proceduresNode = new QTreeWidgetItem(dbNode);
+    proceduresNode->setText(0, tr("Procedures"));
+    proceduresNode->setData(0, ItemTypeRole, QStringLiteral("procedures"));
+    proceduresNode->setData(0, DbNameRole, databaseName);
+
+    auto* functionsNode = new QTreeWidgetItem(dbNode);
+    functionsNode->setText(0, tr("Functions"));
+    functionsNode->setData(0, ItemTypeRole, QStringLiteral("functions"));
+    functionsNode->setData(0, DbNameRole, databaseName);
+
+    return dbNode;
+}
+
+void DirectoryWidget::createTableNode(QTreeWidgetItem* tablesNode,
+                                      const QString& databaseName,
+                                      const QString& tableName,
+                                      const QStringList& columns)
+{
+    auto* tableNode = new QTreeWidgetItem(tablesNode);
+    tableNode->setText(0, tableName);
+    tableNode->setData(0, ItemTypeRole, QStringLiteral("table"));
+    tableNode->setData(0, DbNameRole, databaseName);
+    tableNode->setData(0, TableNameRole, tableName);
+
+    auto* columnsNode = new QTreeWidgetItem(tableNode);
+    columnsNode->setText(0, tr("Columns"));
+    columnsNode->setData(0, ItemTypeRole, QStringLiteral("columns"));
+    columnsNode->setData(0, DbNameRole, databaseName);
+    columnsNode->setData(0, TableNameRole, tableName);
+
+    for (const QString& columnText : columns) {
+        auto* columnNode = new QTreeWidgetItem(columnsNode);
+        columnNode->setText(0, columnText);
+        columnNode->setData(0, ItemTypeRole, QStringLiteral("column"));
+        columnNode->setData(0, DbNameRole, databaseName);
+        columnNode->setData(0, TableNameRole, tableName);
+    }
+
+    auto* indexesNode = new QTreeWidgetItem(tableNode);
+    indexesNode->setText(0, tr("Indexes"));
+    indexesNode->setData(0, ItemTypeRole, QStringLiteral("indexes"));
+    indexesNode->setData(0, DbNameRole, databaseName);
+    indexesNode->setData(0, TableNameRole, tableName);
+}
+
+void DirectoryWidget::handleItemDoubleClicked(QTreeWidgetItem* item)
+{
+    if (!item) {
         return;
     }
 
-    QListWidgetItem* existingItem = findFileItem(normalizedFilePath);
-    if (existingItem != nullptr) {
-        openedFileList->setCurrentItem(existingItem);
+    const QString itemType = item->data(0, ItemTypeRole).toString();
+    const QString dbName = item->data(0, DbNameRole).toString();
+    const QString tableName = item->data(0, TableNameRole).toString();
+
+    if (itemType == QStringLiteral("table")) {
+        emit tableActivated(dbName, tableName);
         return;
     }
 
-    const QFileInfo fileInfo(normalizedFilePath);
-    auto* item = new QListWidgetItem(fileInfo.fileName(), openedFileList);
-    item->setData(Qt::UserRole, normalizedFilePath);
-    item->setToolTip(normalizedFilePath);
-    openedFileList->addItem(item);
-    openedFileList->setCurrentItem(item);
-}
-
-void DirectoryWidget::setCurrentFile(const QString& filePath)
-{
-    QListWidgetItem* item = findFileItem(filePath);
-    if (item != nullptr) {
-        openedFileList->setCurrentItem(item);
+    if (itemType == QStringLiteral("column")) {
+        const QString columnText = item->text(0);
+        const QString columnName = columnText.section(':', 0, 0).trimmed();
+        emit columnActivated(dbName, tableName, columnName);
     }
 }
 
-QListWidgetItem* DirectoryWidget::findFileItem(const QString& filePath) const
-{
-    if (!openedFileList) {
-        return nullptr;
-    }
-
-    const QString normalizedFilePath = normalizeFilePath(filePath);
-    for (int i = 0; i < openedFileList->count(); ++i) {
-        QListWidgetItem* item = openedFileList->item(i);
-        if (!item) {
-            continue;
-        }
-
-        const QString itemPath = item->data(Qt::UserRole).toString();
-        if (isSameFilePath(itemPath, normalizedFilePath)) {
-            return item;
-        }
-    }
-
-    return nullptr;
-}
-
-QString DirectoryWidget::normalizeFilePath(const QString& filePath) const
-{
-    if (filePath.isEmpty()) {
-        return QString();
-    }
-    return QDir::cleanPath(QFileInfo(filePath).absoluteFilePath());
-}
-
-bool DirectoryWidget::isSameFilePath(const QString& leftPath, const QString& rightPath) const
-{
-    const QString normalizedLeft = normalizeFilePath(leftPath);
-    const QString normalizedRight = normalizeFilePath(rightPath);
-
-#ifdef Q_OS_WIN
-    return QString::compare(normalizedLeft, normalizedRight, Qt::CaseInsensitive) == 0;
-#else
-    return normalizedLeft == normalizedRight;
-#endif
-}
