@@ -113,7 +113,11 @@ void OpePanelWidget::initConnections()
     // FileWidget 承接“已打开文件列表”职责，与 EditorWidget 通过 OpePanelWidget 连接，保持组件解耦。
     connect(editorWidget, &EditorWidget::fileOpened, fileWidget, &FileWidget::addOpenedFile);
     connect(editorWidget, &EditorWidget::currentFileChanged, fileWidget, &FileWidget::setCurrentFile);
+    connect(editorWidget, &EditorWidget::fileModifiedStateChanged, fileWidget, &FileWidget::updateFileModifiedState);
+    connect(editorWidget, &EditorWidget::fileClosed, fileWidget, &FileWidget::removeOpenedFile);
+    connect(editorWidget, &EditorWidget::fileKeyChanged, fileWidget, &FileWidget::updateFileKey);
     connect(fileWidget, &FileWidget::fileActivated, editorWidget, &EditorWidget::switchToFile);
+    connect(fileWidget, &FileWidget::closeFileRequested, editorWidget, &EditorWidget::closeFile);
 
     connect(editorWidget, &EditorWidget::toggleDirectoryRequested, this, &OpePanelWidget::toggleDirectoryPanel);
     connect(editorWidget, &EditorWidget::sqlExecuted, terminalWidget, &TerminalWidget::appendCommand);
@@ -346,4 +350,3 @@ QStackedWidget* OpePanelWidget::getMainDisplayStackedWidget() const
 {
     return mainDisplayStackedWidget;
 }
-

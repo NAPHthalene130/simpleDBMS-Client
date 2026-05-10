@@ -43,7 +43,7 @@ public:
      * @param filePath 文件完整路径
      * @author YuzhSong
      */
-    void addOpenedFile(const QString& filePath);
+    void addOpenedFile(const QString& fileKey, const QString& displayName, bool modified);
 
     /**
      * @brief 设置当前文件选中项
@@ -51,7 +51,40 @@ public:
      * @param filePath 文件完整路径
      * @author YuzhSong
      */
-    void setCurrentFile(const QString& filePath);
+    void setCurrentFile(const QString& fileKey);
+
+    /**
+     * @brief 更新文件未保存状态并刷新显示文本
+     * @param fileKey 文件唯一标识（已落盘可用绝对路径，未落盘可用临时 key）
+     * @param modified 是否未保存修改
+     * @author YuzhSong
+     */
+    void updateFileModifiedState(const QString& fileKey, bool modified);
+
+    /**
+     * @brief 删除已打开文件项
+     * @param fileKey 文件唯一标识
+     * @author YuzhSong
+     */
+    void removeOpenedFile(const QString& fileKey);
+
+    /**
+     * @brief 根据旧 key 更新为新 key（用于未落盘文件另存为后转为真实路径）
+     * @param oldFileKey 旧文件唯一标识
+     * @param newFileKey 新文件唯一标识
+     * @param newDisplayName 新显示名
+     * @param modified 新未保存状态
+     * @author YuzhSong
+     */
+    void updateFileKey(const QString& oldFileKey, const QString& newFileKey, const QString& newDisplayName, bool modified);
+
+    /**
+     * @brief 根据文件唯一标识查找列表项
+     * @param fileKey 文件唯一标识
+     * @return 命中返回列表项指针，否则返回 nullptr
+     * @author YuzhSong
+     */
+    QListWidgetItem* findFileItem(const QString& fileKey) const;
 
 signals:
     /**
@@ -60,7 +93,15 @@ signals:
      * @param filePath 被激活文件的完整路径
      * @author YuzhSong
      */
-    void fileActivated(const QString& filePath);
+    void fileActivated(const QString& fileKey);
+
+    /**
+     * @brief 请求关闭文件信号
+     * @details FileWidget 只负责发起关闭请求，不负责保存判断与读写
+     * @param fileKey 待关闭文件唯一标识
+     * @author YuzhSong
+     */
+    void closeFileRequested(const QString& fileKey);
 
 private:
     /**
@@ -87,27 +128,21 @@ private:
      * @return 命中则返回项指针，否则返回 nullptr
      * @author YuzhSong
      */
-    QListWidgetItem* findFileItem(const QString& filePath) const;
-
     /**
-     * @brief 规范化路径
-     * @details 用于避免相对路径、分隔符差异导致的重复项。
-     * @param filePath 原始路径
-     * @return 规范化后的绝对路径
+     * @brief 根据显示名和未保存状态组装列表展示文本
+     * @param displayName 文件显示名
+     * @param modified 是否未保存
+     * @return 展示文本（未保存状态带 *）
      * @author YuzhSong
      */
-    QString normalizeFilePath(const QString& filePath) const;
+    QString buildDisplayText(const QString& displayName, bool modified) const;
 
     /**
-     * @brief 判断两个路径是否表示同一文件
-     * @param leftPath 左路径
-     * @param rightPath 右路径
-     * @return 相同返回 true，否则 false
+     * @brief 初始化文件列表右键菜单
      * @author YuzhSong
      */
-    bool isSameFilePath(const QString& leftPath, const QString& rightPath) const;
+    void setupContextMenu();
 
 private:
     QListWidget* openedFileList;  ///< 已打开文件列表控件
 };
-

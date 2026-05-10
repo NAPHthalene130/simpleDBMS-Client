@@ -46,6 +46,9 @@ void DirectoryWidget::initUI()
     directoryTree->setRootIsDecorated(true);
     directoryTree->setUniformRowHeights(true);
     directoryTree->setExpandsOnDoubleClick(true);
+    // 作者：YuzhSong
+    // 保留树层级缩进，但将每层缩进宽度调小，避免深层节点名称被挤出可视区域。
+    directoryTree->setIndentation(12);
     directoryTree->header()->setStretchLastSection(true);
 
     mainLayout->addWidget(titleLabel);
@@ -249,4 +252,3 @@ void DirectoryWidget::handleItemDoubleClicked(QTreeWidgetItem* item)
         emit columnActivated(dbName, tableName, columnName);
     }
 }
-
