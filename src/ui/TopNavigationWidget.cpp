@@ -51,7 +51,6 @@ void TopNavigationWidget::onTabChanged(int index)
         emit settingRequested();
     }
 }
-}
 
 void TopNavigationWidget::initUI()
 {

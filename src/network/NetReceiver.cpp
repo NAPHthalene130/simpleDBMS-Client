@@ -14,6 +14,7 @@
 #include "models/network/NetworkTransferData.h"
 #include "ui/AuthWidget.h"
 #include "ui/OpePanelWidget.h"
+#include "ui/TopNavigationWidget.h"
 #include "ui/opePanel/DirectoryWidget.h"
 #include "ui/opePanel/TableWidget.h"
 #include "ui/opePanel/TerminalWidget.h"
@@ -273,8 +274,8 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
                 AuthWidget *authWidget = window->getAuthWidget();
                 if (authWidget != nullptr) {
                     QString displayMsg = success
-                        ? tr("验证成功 - ") + message
-                        : tr("验证失败 - ") + message;
+                        ? QStringLiteral("验证成功 - ") + message
+                        : QStringLiteral("验证失败 - ") + message;
                     authWidget->setConnectionStatus(displayMsg);
                 }
             },

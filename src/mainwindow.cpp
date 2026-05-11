@@ -6,10 +6,13 @@
 #include "models/network/NetworkTransferData.h"
 #include "network/NetSender.h"
 #include "network/NetworkManager.h"
+#include "network/NetSender.h"
 #include "ui/AuthWidget.h"
 #include "ui/OpePanelWidget.h"
 #include "ui/SettingWidget.h"
 #include "ui/TopNavigationWidget.h"
+#include "ui/opePanel/EditorWidget.h"
+#include "ui/opePanel/TableWidget.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
