@@ -3,6 +3,8 @@
 #include <QStackedWidget>
 #include <QVBoxLayout>
 
+#include "models/network/NetworkTransferData.h"
+#include "network/NetSender.h"
 #include "network/NetworkManager.h"
 #include "ui/AuthWidget.h"
 #include "ui/OpePanelWidget.h"
@@ -84,6 +86,10 @@ void MainWindow::showWorkspacePage()
     appContentStackedWidget->setCurrentWidget(opePanelWidget);
     topNavigationWidget->setCurrentPage(TopNavigationWidget::PageType::Workspace);
     setWindowTitle(tr("simpleDBMS - 工作区"));
+
+    // 进入工作区后自动向服务端请求数据库目录结构
+    // 作者：NAPH130
+    sendDirectoryRequest();
 }
 
 void MainWindow::showSettingPage()
@@ -143,4 +149,23 @@ void MainWindow::initStyle()
         "    background-color: #2B2B2B;"
         "}"
     ));
+}
+
+/**
+ * @brief 向服务端发送目录结构请求
+ * @details 构造 DIRECTORY_REQUEST 消息并发送，无参数（取全量目录）。
+ * @author NAPH130
+ */
+void MainWindow::sendDirectoryRequest()
+{
+    NetworkManager *nm = getNetworkManager();
+    if (nm == nullptr || nm->getNetSender() == nullptr) {
+        return;
+    }
+    auto serverSocket = nm->getSocket();
+    if (serverSocket == nullptr || !serverSocket->is_open()) {
+        return;
+    }
+    NetworkTransferData requestData(NetworkTransferData::DIRECTORY_REQUEST, std::string());
+    nm->getNetSender()->send(serverSocket, requestData.toJson());
 }

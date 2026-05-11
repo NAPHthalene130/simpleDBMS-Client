@@ -13,6 +13,7 @@
 #include "NetworkManager.h"
 #include "models/network/NetworkTransferData.h"
 #include "ui/OpePanelWidget.h"
+#include "ui/opePanel/DirectoryWidget.h"
 #include "ui/opePanel/TableWidget.h"
 #include "ui/opePanel/TerminalWidget.h"
 
@@ -240,8 +241,29 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
     }
 
     if (networkTransferData.getType() == NetworkTransferData::DIRECTORY_RESPONSE) {
-        // TODO: 处理数据库目录响应
-        storeAsProperty(buildMessageText(networkTransferData));
+        /**
+         * @brief 处理服务端返回的目录结构数据，刷新左侧数据库目录树
+         * @author NAPH130
+         * @details
+         * 1. 解析 NetworkTransferData 中的 databases 字段获取完整 库-表-字段 层级结构。
+         * 2. 通过 Qt 线程安全机制投递到主线程，调用 DirectoryWidget::refreshFromServer 刷新界面。
+         */
+        const auto databases = networkTransferData.getDatabases();
+        QMetaObject::invokeMethod(
+            mainWindow,
+            [window = mainWindow, databases]() {
+                if (window == nullptr) {
+                    return;
+                }
+                OpePanelWidget *opePanelWidget = window->getOpePanelWidget();
+                if (opePanelWidget != nullptr) {
+                    DirectoryWidget *directoryWidget = opePanelWidget->getDirectoryWidget();
+                    if (directoryWidget != nullptr) {
+                        directoryWidget->refreshFromServer(databases);
+                    }
+                }
+            },
+            Qt::QueuedConnection);
         return;
     }
 

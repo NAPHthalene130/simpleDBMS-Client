@@ -107,6 +107,14 @@ public:
      */
     void logout();
 
+    /**
+     * @brief 向服务端发送目录结构请求
+     * @author NAPH130
+     * @details 构造 DIRECTORY_REQUEST 协议消息并通过 NetSender 发送，服务端响应后
+     *          由 NetReceiver 分发至 DirectoryWidget 刷新界面。
+     */
+    void sendDirectoryRequest();
+
 private:
     /**
      * @brief 初始化主窗口 UI 结构

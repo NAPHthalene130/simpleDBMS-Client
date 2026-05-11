@@ -9,10 +9,12 @@
 #pragma once
 
 #include <QWidget>
+#include <vector>
 
 class QTreeWidget;
 class QTreeWidgetItem;
 class QVariant;
+class DatabaseNode;
 
 /**
  * @class DirectoryWidget
@@ -58,6 +60,16 @@ public:
      * @author YuzhSong
      */
     void refreshDirectory(const QStringList& databaseNames);
+
+    /**
+     * @brief 根据服务端返回的完整目录结构刷新目录树
+     * @details
+     * 1. 接收服务端 DIRECTORY_RESPONSE 返回的 库-表-字段 层级数据。
+     * 2. 清空现有树结构后按 DatabaseNode → TableNode → fields 重建目录树。
+     * @param databases 服务端返回的数据库目录结构
+     * @author NAPH130
+     */
+    void refreshFromServer(const std::vector<DatabaseNode>& databases);
 
 signals:
     /**

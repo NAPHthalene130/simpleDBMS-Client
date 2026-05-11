@@ -14,6 +14,8 @@
 #include <QTreeWidgetItem>
 #include <QVBoxLayout>
 
+#include "models/network/NetworkTransferData.h"
+
 namespace {
 constexpr int ItemTypeRole = Qt::UserRole + 1;
 constexpr int DbNameRole = Qt::UserRole + 2;
@@ -27,7 +29,6 @@ DirectoryWidget::DirectoryWidget(QWidget* parent)
     initUI();
     initStyle();
     initConnections();
-    loadMockDirectory();
 }
 
 void DirectoryWidget::initUI()
@@ -163,6 +164,49 @@ void DirectoryWidget::refreshDirectory(const QStringList& databaseNames)
 
     for (const QString& dbName : databaseNames) {
         createDatabaseNode(databasesNode, dbName);
+    }
+
+    directoryTree->expandItem(rootNode);
+    directoryTree->expandItem(databasesNode);
+}
+
+/**
+ * @brief 根据服务端返回的完整目录结构刷新目录树
+ * @details
+ * 1. 清空现有树结构后重建根节点与 databases 分组节点。
+ * 2. 遍历 DatabaseNode 列表，为每个数据库创建节点并填充其下属 TableNode。
+ * 3. 每个 TableNode 携带的 fields 列表直接作为列节点展示。
+ * @param databases 服务端 DIRECTORY_RESPONSE 中的数据库目录列表
+ * @author NAPH130
+ */
+void DirectoryWidget::refreshFromServer(const std::vector<DatabaseNode>& databases)
+{
+    clearDirectory();
+
+    auto* rootNode = new QTreeWidgetItem(directoryTree);
+    rootNode->setText(0, tr("simpleDBMS"));
+    rootNode->setData(0, ItemTypeRole, QStringLiteral("root"));
+
+    auto* databasesNode = new QTreeWidgetItem(rootNode);
+    databasesNode->setText(0, tr("databases"));
+    databasesNode->setData(0, ItemTypeRole, QStringLiteral("databases"));
+
+    for (const DatabaseNode& databaseNode : databases) {
+        const QString dbName = QString::fromStdString(databaseNode.getName());
+
+        QTreeWidgetItem* dbNode = createDatabaseNode(databasesNode, dbName);
+        QTreeWidgetItem* tablesNode = dbNode->child(0);
+
+        for (const TableNode& tableNode : databaseNode.getTables()) {
+            const QString tableName = QString::fromStdString(tableNode.getName());
+            QStringList columnTexts;
+            const auto& fields = tableNode.getFields();
+            columnTexts.reserve(static_cast<qsizetype>(fields.size()));
+            for (const std::string& field : fields) {
+                columnTexts.append(QString::fromStdString(field));
+            }
+            createTableNode(tablesNode, dbName, tableName, columnTexts);
+        }
     }
 
     directoryTree->expandItem(rootNode);
