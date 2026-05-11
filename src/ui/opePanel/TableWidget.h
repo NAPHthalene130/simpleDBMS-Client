@@ -4,6 +4,7 @@
 
 class MainWindow;
 class QLabel;
+class QPushButton;
 class QTableWidget;
 class QString;
 
@@ -55,9 +56,19 @@ public:
      */
     void showMessage(const QString &message);
 
+    void refreshTheme();
+
+signals:
+    /**
+     * @brief 请求返回编辑器视图
+     * @author Qi
+     */
+    void backToEditorRequested();
+
 private:
     MainWindow *mainWindow; // 主窗口引用
     QLabel *messageLabel; // 消息显示标签
+    QPushButton *backButton; // 返回编辑器按钮
     QTableWidget *tableViewWidget; // 表格视图组件
     std::vector<std::string> columns; // 查询结果列名
     std::vector<std::vector<std::string>> rows; // 查询结果数据

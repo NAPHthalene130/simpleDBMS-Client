@@ -1,5 +1,9 @@
 #include "mainwindow.h"
 
+#include <QApplication>
+#include <QCloseEvent>
+#include <QFont>
+#include <QSettings>
 #include <QStackedWidget>
 #include <QVBoxLayout>
 
@@ -7,7 +11,9 @@
 #include "ui/AuthWidget.h"
 #include "ui/OpePanelWidget.h"
 #include "ui/SettingWidget.h"
+#include "ui/ThemeManager.h"
 #include "ui/TopNavigationWidget.h"
+#include "ui/opePanel/EditorWidget.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,10 +26,18 @@ MainWindow::MainWindow(QWidget *parent)
     , settingWidget(new SettingWidget(this))
     , networkManager(new NetworkManager(this))
 {
-    resize(1200, 800);
+    const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+    const bool rememberWindowSize = settings.value("habit/rememberWindowSize", true).toBool();
+    if (rememberWindowSize) {
+        resize(settings.value("window/size", QSize(1200, 800)).toSize());
+    } else {
+        resize(1200, 800);
+    }
+
     initUI();
     initStyle();
     initConnections();
+    applyGlobalSettings();
     showAuthPage();
 }
 
@@ -80,23 +94,46 @@ void MainWindow::showAuthPage()
 
 void MainWindow::showWorkspacePage()
 {
+    const bool connected = networkManager != nullptr
+                           && networkManager->getSocket() != nullptr
+                           && networkManager->getSocket()->is_open();
+    if (!connected && networkManager != nullptr) {
+        networkManager->start();
+    }
+
     rootStackedWidget->setCurrentWidget(appContainerWidget);
     appContentStackedWidget->setCurrentWidget(opePanelWidget);
+    if (opePanelWidget != nullptr && opePanelWidget->getEditorWidget() != nullptr) {
+        opePanelWidget->getEditorWidget()->reloadEditorSettingsFromLocal();
+    }
+    topNavigationWidget->setUserName(authWidget->getUserName());
     topNavigationWidget->setCurrentPage(TopNavigationWidget::PageType::Workspace);
     setWindowTitle(tr("simpleDBMS - 工作区"));
 }
 
 void MainWindow::showSettingPage()
 {
+    const bool connected = networkManager != nullptr
+                           && networkManager->getSocket() != nullptr
+                           && networkManager->getSocket()->is_open();
+    const QString connectionStatus = connected ? tr("已连接") : tr("未连接");
+    const QString currentDatabase = property("currentDatabase").toString();
+    settingWidget->refreshAccountInfo(authWidget->getUserName(), connectionStatus, currentDatabase);
+    settingWidget->reloadSettingsFromLocal();
+
     rootStackedWidget->setCurrentWidget(appContainerWidget);
     appContentStackedWidget->setCurrentWidget(settingWidget);
+    topNavigationWidget->setUserName(authWidget->getUserName());
     topNavigationWidget->setCurrentPage(TopNavigationWidget::PageType::Setting);
     setWindowTitle(tr("simpleDBMS - 设置"));
 }
 
 void MainWindow::logout()
 {
-    // 作者：YuzhSong，当前仅处理页面切换，后续可在此接入真实登出逻辑。
+    if (networkManager != nullptr) {
+        networkManager->stop();
+    }
+    setProperty("currentDatabase", QString());
     showAuthPage();
 }
 
@@ -131,16 +168,53 @@ void MainWindow::initConnections()
     connect(topNavigationWidget, &TopNavigationWidget::workspaceRequested, this, &MainWindow::showWorkspacePage);
     connect(topNavigationWidget, &TopNavigationWidget::settingRequested, this, &MainWindow::showSettingPage);
 
-    // 作者：YuzhSong
-    // 设置页通过 logoutRequested 发出退出意图，MainWindow 统一执行 logout 路由。
     connect(settingWidget, &SettingWidget::logoutRequested, this, &MainWindow::logout);
+    connect(settingWidget, &SettingWidget::backToWorkspaceRequested, this, &MainWindow::showWorkspacePage);
+    connect(settingWidget, &SettingWidget::settingsApplied, this, &MainWindow::applyGlobalSettings);
 }
 
 void MainWindow::initStyle()
 {
-    setStyleSheet(QString(
-        "QMainWindow {"
-        "    background-color: #2B2B2B;"
-        "}"
-    ));
+    setStyleSheet(ThemeManager::globalBase());
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+    const bool rememberWindowSize = settings.value("habit/rememberWindowSize", true).toBool();
+    if (rememberWindowSize) {
+        QSettings writableSettings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+        writableSettings.setValue("window/size", size());
+    }
+
+    QMainWindow::closeEvent(event);
+}
+
+void MainWindow::applyGlobalSettings()
+{
+    qApp->setStyleSheet(ThemeManager::globalBase());
+
+    const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+    const int fontSize = settings.value("appearance/uiFontSize", QStringLiteral("14")).toString().toInt();
+    if (fontSize > 0) {
+        QFont globalFont = qApp->font();
+        globalFont.setPixelSize(fontSize);
+        qApp->setFont(globalFont);
+    }
+
+    const QString scaleStr = settings.value("appearance/uiScale", QStringLiteral("100%")).toString();
+    const QString scalePercentStr = scaleStr.chopped(1);
+    const int scalePercent = scalePercentStr.toInt();
+    if (scalePercent > 0 && scalePercent != 100) {
+        const qreal factor = scalePercent / 100.0;
+        qputenv("QT_SCALE_FACTOR", QByteArray::number(factor, 'g', 2));
+        setStatusTip(tr("界面缩放已设置为 %1，重启应用后完全生效。").arg(QString::number(scalePercent) + "%"));
+    } else {
+        qunsetenv("QT_SCALE_FACTOR");
+    }
+
+    if (authWidget) authWidget->refreshTheme();
+    if (opePanelWidget) opePanelWidget->refreshTheme();
+    if (settingWidget) settingWidget->refreshTheme();
+    if (topNavigationWidget) topNavigationWidget->refreshTheme();
 }

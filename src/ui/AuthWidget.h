@@ -89,6 +89,8 @@ public:
      */
     void setPassword(const QString &password);
 
+    void refreshTheme();
+
 signals:
     /**
      * @brief 登录成功信号

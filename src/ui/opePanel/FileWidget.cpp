@@ -7,6 +7,7 @@
  */
 
 #include "FileWidget.h"
+#include "ui/ThemeManager.h"
 
 #include <QAbstractItemView>
 #include <QLabel>
@@ -60,57 +61,16 @@ void FileWidget::initConnections()
             emit fileActivated(fileKey);
         }
     });
+}
 
-    connect(openedFileList, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
-        if (!item) {
-            return;
-        }
-        const QString fileKey = item->data(Qt::UserRole).toString();
-        if (!fileKey.isEmpty()) {
-            emit fileActivated(fileKey);
-        }
-    });
+void FileWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::sidePanel());
 }
 
 void FileWidget::initStyle()
 {
-    setStyleSheet(
-        "FileWidget {"
-        "    background-color: #111315;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 14px;"
-        "}"
-        "QLabel#fileTitleLabel {"
-        "    color: #D5D8DD;"
-        "    font-weight: 700;"
-        "    background-color: #2F3134;"
-        "    border: 1px solid #3A3D42;"
-        "    border-radius: 8px;"
-        "    padding: 8px 10px;"
-        "}"
-        "QListWidget#fileOpenedFileList {"
-        "    background-color: #111315;"
-        "    color: #F0F0F0;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 10px;"
-        "    padding: 6px;"
-        "    outline: none;"
-        "}"
-        "QListWidget#fileOpenedFileList::item {"
-        "    min-height: 23px;"
-        "    max-height: 23px;"
-        "    padding: 4px 8px;"
-        "    margin: 1px 2px;"
-        "    border-radius: 4px;"
-        "}"
-        "QListWidget#fileOpenedFileList::item:hover {"
-        "    background-color: #34373C;"
-        "}"
-        "QListWidget#fileOpenedFileList::item:selected {"
-        "    background-color: #2F64A8;"
-        "    color: #FFFFFF;"
-        "}"
-    );
+    setStyleSheet(ThemeManager::sidePanel());
 }
 
 void FileWidget::addOpenedFile(const QString& fileKey, const QString& displayName, bool modified)

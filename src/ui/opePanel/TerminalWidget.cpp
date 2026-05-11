@@ -1,4 +1,5 @@
 #include "TerminalWidget.h"
+#include "ui/ThemeManager.h"
 
 #include <QDateTime>
 #include <QFont>
@@ -105,40 +106,10 @@ void TerminalWidget::submitSql()
 
 void TerminalWidget::applyTerminalStyle()
 {
-    // 作者：YuzhSong
-    // 统一终端样式为深灰主题，并增强输入区、按钮和边框层次，不改动 submit/append 逻辑。
-    // 作者：YuzhSong
-    // TerminalWidget 外层即主面板，内部输出与输入仅保留弱边框，降低套娃感并统一 IDE 深色层级。
-    setStyleSheet(
-        "TerminalWidget {"
-        "  background-color: #111315;"
-        "  color: #F0F0F0;"
-        "  border: 1px solid #1B1D20;"
-        "  border-radius: 14px;"
-        "}"
-        "QPlainTextEdit#terminalOutputTextEdit {"
-        "  background-color: #111315;"
-        "  color: #F0F0F0;"
-        "  border: 1px solid #1B1D20;"
-        "  border-radius: 10px;"
-        "  selection-background-color: #3D6FB6;"
-        "}"
-        "QLineEdit#terminalInputLineEdit {"
-        "  background-color: #111315;"
-        "  color: #F0F0F0;"
-        "  border: 1px solid #1B1D20;"
-        "  border-radius: 10px;"
-        "  padding: 8px 10px;"
-        "}"
-        "QPushButton#terminalExecuteButton {"
-        "  background-color: #111315;"
-        "  color: #ffffff;"
-        "  border: 1px solid #1B1D20;"
-        "  border-radius: 10px;"
-        "  padding: 8px 14px;"
-        "}"
-        "QPushButton#terminalExecuteButton:hover {"
-        "  background-color: #1A1C1E;"
-        "}"
-    );
+    setStyleSheet(ThemeManager::terminal());
+}
+
+void TerminalWidget::refreshTheme()
+{
+    applyTerminalStyle();
 }

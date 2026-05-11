@@ -7,6 +7,7 @@
  */
 
 #include "ActivityBarWidget.h"
+#include "ui/ThemeManager.h"
 
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -60,32 +61,7 @@ void ActivityBarWidget::initUI()
 
 void ActivityBarWidget::initStyle()
 {
-    setStyleSheet(
-        "ActivityBarWidget {"
-        "    background-color: #111315;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 14px;"
-        "}"
-        "QPushButton {"
-        "    min-width: 30px;"
-        "    min-height: 30px;"
-        "    border: 1px solid transparent;"
-        "    border-radius: 7px;"
-        "    background-color: #1A1C1E;"
-        "    color: #C8CBD2;"
-        "    font-weight: 600;"
-        "    font-size: 11px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #26292D;"
-        "    border-color: #2B3035;"
-        "}"
-        "QPushButton:checked {"
-        "    background-color: #2F64A8;"
-        "    border: 1px solid #2F64A8;"
-        "    color: #FFFFFF;"
-        "}"
-    );
+    setStyleSheet(ThemeManager::activityBar());
 }
 
 void ActivityBarWidget::initConnections()
@@ -120,5 +96,10 @@ void ActivityBarWidget::setAiChecked(bool checked)
 void ActivityBarWidget::setTerminalChecked(bool checked)
 {
     terminalButton->setChecked(checked);
+}
+
+void ActivityBarWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::activityBar());
 }
 

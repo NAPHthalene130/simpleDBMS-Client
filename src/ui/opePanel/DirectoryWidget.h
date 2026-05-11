@@ -59,6 +59,8 @@ public:
      */
     void refreshDirectory(const QStringList& databaseNames);
 
+    void refreshTheme();
+
 signals:
     /**
      * @brief 表节点激活信号

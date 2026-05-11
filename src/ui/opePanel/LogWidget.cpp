@@ -1,4 +1,5 @@
 #include "LogWidget.h"
+#include "ui/ThemeManager.h"
 
 #include <QLabel>
 #include <QListWidget>
@@ -32,41 +33,7 @@ void LogWidget::initUI()
 
 void LogWidget::initStyle()
 {
-    setStyleSheet(
-        "LogWidget {"
-        "    background-color: #111315;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 14px;"
-        "}"
-        "QLabel#logTitleLabel {"
-        "    color: #D5D8DD;"
-        "    font-weight: 700;"
-        "    background-color: #2F3134;"
-        "    border: 1px solid #3A3D42;"
-        "    border-radius: 8px;"
-        "    padding: 8px 10px;"
-        "}"
-        "QListWidget#logListWidget {"
-        "    background-color: #111315;"
-        "    color: #F0F0F0;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 10px;"
-        "    padding: 6px;"
-        "    outline: none;"
-        "}"
-        "QListWidget#logListWidget::item {"
-        "    padding: 7px 8px;"
-        "    margin: 1px 2px;"
-        "    border-radius: 4px;"
-        "}"
-        "QListWidget#logListWidget::item:hover {"
-        "    background-color: #34373C;"
-        "}"
-        "QListWidget#logListWidget::item:selected {"
-        "    background-color: #2F64A8;"
-        "    color: #FFFFFF;"
-        "}"
-    );
+    setStyleSheet(ThemeManager::sidePanel());
 }
 
 void LogWidget::appendLog(const QString& message)
@@ -77,5 +44,10 @@ void LogWidget::appendLog(const QString& message)
 
     logList->addItem(message);
     logList->scrollToBottom();
+}
+
+void LogWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::sidePanel());
 }
 

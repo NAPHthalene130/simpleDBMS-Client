@@ -73,6 +73,33 @@ public:
      */
     SqlHighlighter* getHighlighter() const;
 
+    /**
+     * @brief 设置编辑器自动换行
+     * @author Qi
+     * @param enabled true 启用自动换行，false 关闭自动换行
+     */
+    void setAutoWrapEnabled(bool enabled);
+
+    /**
+     * @brief 设置行号显示开关
+     * @author Qi
+     * @param enabled true 显示行号，false 隐藏行号
+     */
+    void setLineNumberVisible(bool enabled);
+
+    /**
+     * @brief 设置补全词列表（数据库名/表名等动态词汇）
+     * @author Qi
+     * @param names 需要添加到补全候选的词汇列表
+     */
+    void setCompletionNames(const QStringList &names);
+
+    /**
+     * @brief 刷新主题样式
+     * @author Qi
+     */
+    void refreshTheme();
+
 protected:
     /**
      * @brief 重置事件处理函数
@@ -198,4 +225,6 @@ private:
     LineNumberArea* lineNumberArea;      ///< 行号显示区域
     SqlHighlighter* sqlHighlighter;      ///< SQL 语法高亮器
     QCompleter* sqlCompleter;            ///< SQL 自动补全器
+    QStringList baseKeywords;            ///< SQL 基础关键字列表
+    bool lineNumberVisible;              ///< 行号显示开关
 };

@@ -25,6 +25,8 @@ public:
     void setAiChecked(bool checked);
     void setTerminalChecked(bool checked);
 
+    void refreshTheme();
+
 signals:
     void directoryPanelRequested();
     void filePanelRequested();
