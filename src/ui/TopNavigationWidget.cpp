@@ -42,12 +42,15 @@ void TopNavigationWidget::setUserName(const QString &userName)
 void TopNavigationWidget::onTabChanged(int index)
 {
     // 作者：YuzhSong
-    // 顶部导航使用真实标签页控件；这里只负责转发“请求”，具体页面切换仍由 MainWindow 处理。
+    // 顶部导航使用真实标签页控件；这里只负责转发"请求"，具体页面切换仍由 MainWindow 处理。
     if (index == 0) {
         emit workspaceRequested();
     } else if (index == 1) {
+        emit tableViewRequested();
+    } else if (index == 2) {
         emit settingRequested();
     }
+}
 }
 
 void TopNavigationWidget::initUI()
@@ -68,6 +71,7 @@ void TopNavigationWidget::initUI()
     navigationTabBar->setUsesScrollButtons(false);
     navigationTabBar->setElideMode(Qt::ElideNone);
     navigationTabBar->addTab(tr("工作区"));
+    navigationTabBar->addTab(tr("表内容"));
     navigationTabBar->addTab(tr("设置"));
     navigationTabBar->setCurrentIndex(0);
     navigationTabBar->setCursor(Qt::PointingHandCursor);
@@ -153,8 +157,10 @@ void TopNavigationWidget::updateTabStyle()
     int targetIndex = -1;
     if (currentPageType == PageType::Workspace) {
         targetIndex = 0;
-    } else if (currentPageType == PageType::Setting) {
+    } else if (currentPageType == PageType::TableView) {
         targetIndex = 1;
+    } else if (currentPageType == PageType::Setting) {
+        targetIndex = 2;
     }
 
     if (targetIndex >= 0 && navigationTabBar->currentIndex() != targetIndex) {

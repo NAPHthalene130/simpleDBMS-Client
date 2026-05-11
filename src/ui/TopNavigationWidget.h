@@ -34,6 +34,7 @@ public:
     enum class PageType {
         None,
         Workspace,
+        TableView,
         Setting
     };
 
@@ -65,6 +66,12 @@ signals:
      * @author YuzhSong
      */
     void workspaceRequested();
+
+    /**
+     * @brief 请求切换到表内容视图
+     * @author NAPH130
+     */
+    void tableViewRequested();
 
     /**
      * @brief 请求切换到设置页

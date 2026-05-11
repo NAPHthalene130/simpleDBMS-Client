@@ -90,6 +90,12 @@ void MainWindow::showWorkspacePage()
     rootStackedWidget->setCurrentWidget(appContainerWidget);
     appContentStackedWidget->setCurrentWidget(opePanelWidget);
     topNavigationWidget->setCurrentPage(TopNavigationWidget::PageType::Workspace);
+
+    // 切换回编辑器视图
+    // 作者：NAPH130
+    if (opePanelWidget != nullptr) {
+        opePanelWidget->switchWidget(opePanelWidget->getEditorWidget());
+    }
     setWindowTitle(tr("simpleDBMS - 工作区"));
 
     // 进入工作区后自动向服务端请求数据库目录结构
@@ -103,6 +109,20 @@ void MainWindow::showSettingPage()
     appContentStackedWidget->setCurrentWidget(settingWidget);
     topNavigationWidget->setCurrentPage(TopNavigationWidget::PageType::Setting);
     setWindowTitle(tr("simpleDBMS - 设置"));
+}
+
+void MainWindow::showTablePage()
+{
+    rootStackedWidget->setCurrentWidget(appContainerWidget);
+    appContentStackedWidget->setCurrentWidget(opePanelWidget);
+    topNavigationWidget->setCurrentPage(TopNavigationWidget::PageType::TableView);
+
+    // 切换主显示区域到 TableWidget
+    // 作者：NAPH130
+    if (opePanelWidget != nullptr) {
+        opePanelWidget->switchWidget(opePanelWidget->getTableWidget());
+    }
+    setWindowTitle(tr("simpleDBMS - 表内容"));
 }
 
 void MainWindow::logout()
@@ -157,6 +177,7 @@ void MainWindow::initConnections()
     // 作者：YuzhSong
     // TopNavigationWidget 只发请求信号，不直接操作页面；切换中枢保持在 MainWindow。
     connect(topNavigationWidget, &TopNavigationWidget::workspaceRequested, this, &MainWindow::showWorkspacePage);
+    connect(topNavigationWidget, &TopNavigationWidget::tableViewRequested, this, &MainWindow::showTablePage);
     connect(topNavigationWidget, &TopNavigationWidget::settingRequested, this, &MainWindow::showSettingPage);
 
     // 作者：YuzhSong

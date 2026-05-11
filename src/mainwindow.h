@@ -107,6 +107,13 @@ public:
     void showSettingPage();
 
     /**
+     * @brief 显示表内容视图
+     * @author NAPH130
+     * @details 切换主工作区到 TableWidget 视图，对应顶部导航"表内容"标签
+     */
+    void showTablePage();
+
+    /**
      * @brief 退出登录并返回认证页
      * @author YuzhSong
      * @details
