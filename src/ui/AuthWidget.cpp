@@ -5,10 +5,14 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 
 #include "mainwindow.h"
+#include "models/network/NetworkTransferData.h"
+#include "network/NetworkManager.h"
+#include "network/NetSender.h"
 /**
  * @brief 构造函数
  * @author NAPH130
@@ -24,6 +28,7 @@ AuthWidget::AuthWidget(MainWindow *mainWindow, QWidget *parent)
     , passwordLineEdit(nullptr)
     , testConnectionButton(nullptr)
     , confirmButton(nullptr)
+    , statusLabel(nullptr)
 {
     initUI();
     applyStyles();
@@ -152,6 +157,14 @@ void AuthWidget::initUI()
     cardLayout->addLayout(formLayout);
     cardLayout->addSpacing(6);
 
+    // 连接状态提示标签
+    // 作者：NAPH130
+    statusLabel = new QLabel(QString(), cardWidget);
+    statusLabel->setObjectName("authStatusLabel");
+    statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setWordWrap(true);
+    cardLayout->addWidget(statusLabel);
+
     testConnectionButton = new QPushButton(tr("测试连接"), cardWidget);
     testConnectionButton->setObjectName("btnTestConnection");
     testConnectionButton->setCursor(Qt::PointingHandCursor);
@@ -256,25 +269,132 @@ void AuthWidget::applyStyles()
         "QPushButton#btnConfirm:pressed {"
         "    background-color: #0D5689;"
         "}"
+        "QLabel#authStatusLabel {"
+        "    color: #E0A030;"
+        "    font-size: 12px;"
+        "    background-color: transparent;"
+        "    padding: 4px 0px;"
+        "}"
     ));
+}
+
+/**
+ * @brief 设置连接状态提示文本
+ * @author NAPH130
+ * @param status 状态文本
+ */
+void AuthWidget::setConnectionStatus(const QString &status)
+{
+    if (statusLabel != nullptr) {
+        statusLabel->setText(status);
+    }
 }
 
 /**
  * @brief 测试连接按钮点击槽函数
  * @author NAPH130
+ * @details 连接服务端并发送 VERIFY_REQUEST，根据响应显示验证结果
  */
 void AuthWidget::onTestConnection()
 {
-    // TODO: 测试数据库连接逻辑
+    if (mainWindow == nullptr) {
+        return;
+    }
+
+    NetworkManager *nm = mainWindow->getNetworkManager();
+    if (nm == nullptr) {
+        setConnectionStatus(tr("网络模块未初始化"));
+        return;
+    }
+
+    const QString ip = getIpAddress().isEmpty() ? QStringLiteral("127.0.0.1") : getIpAddress();
+    const QString portStr = getPort().isEmpty() ? QStringLiteral("10086") : getPort();
+    const unsigned short port = static_cast<unsigned short>(portStr.toUShort());
+
+    // 连接服务端
+    // 作者：NAPH130
+    if (!nm->connectToServer(ip.toStdString(), port)) {
+        setConnectionStatus(tr("无法连接到服务器 %1:%2").arg(ip, portStr));
+        return;
+    }
+
+    // 启动接收线程
+    // 作者：NAPH130
+    nm->start();
+
+    // 发送 VERIFY_REQUEST
+    // 作者：NAPH130
+    NetworkTransferData requestData(NetworkTransferData::VERIFY_REQUEST,
+                                    getUserName().toStdString());
+    requestData.setPassword(getPassword().toStdString());
+
+    auto serverSocket = nm->getSocket();
+    if (serverSocket == nullptr || !serverSocket->is_open()) {
+        setConnectionStatus(tr("连接已断开"));
+        return;
+    }
+
+    NetSender *sender = nm->getNetSender();
+    if (sender == nullptr) {
+        setConnectionStatus(tr("网络发送器未初始化"));
+        return;
+    }
+
+    sender->send(serverSocket, requestData.toJson());
+    setConnectionStatus(tr("正在验证连接..."));
 }
 
 /**
  * @brief 确认连接按钮点击槽函数
  * @author NAPH130
+ * @details 确保连接后发送 LOGIN_REQUEST，成功则进入工作区
  */
 void AuthWidget::onConfirmConnection()
 {
-    // 作者：YuzhSong，当前仅预留登录成功信号，后续由连接认证逻辑触发。
-    // 为保证本阶段可以手动演示正式页面路由，这里临时发出 loginSucceeded 信号。
-    emit loginSucceeded();
+    if (mainWindow == nullptr) {
+        return;
+    }
+
+    NetworkManager *nm = mainWindow->getNetworkManager();
+    if (nm == nullptr) {
+        setConnectionStatus(tr("网络模块未初始化"));
+        return;
+    }
+
+    const QString ip = getIpAddress().isEmpty() ? QStringLiteral("127.0.0.1") : getIpAddress();
+    const QString portStr = getPort().isEmpty() ? QStringLiteral("10086") : getPort();
+    const unsigned short port = static_cast<unsigned short>(portStr.toUShort());
+
+    // 确保已连接
+    // 作者：NAPH130
+    bool connected = nm->connectToServer(ip.toStdString(), port);
+    if (!connected) {
+        setConnectionStatus(tr("无法连接到服务器 %1:%2").arg(ip, portStr));
+        return;
+    }
+
+    // 确保接收线程已启动
+    // 作者：NAPH130
+    nm->start();
+
+    // 发送 LOGIN_REQUEST
+    // 作者：NAPH130
+    NetworkTransferData requestData(NetworkTransferData::LOGIN_REQUEST,
+                                    getUserName().toStdString());
+    requestData.setPassword(getPassword().toStdString());
+
+    auto serverSocket = nm->getSocket();
+    if (serverSocket == nullptr || !serverSocket->is_open()) {
+        setConnectionStatus(tr("连接已断开"));
+        return;
+    }
+
+    NetSender *sender = nm->getNetSender();
+    if (sender == nullptr) {
+        setConnectionStatus(tr("网络发送器未初始化"));
+        return;
+    }
+
+    sender->send(serverSocket, requestData.toJson());
+    setConnectionStatus(tr("正在登录..."));
 }

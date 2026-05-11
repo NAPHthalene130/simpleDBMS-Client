@@ -56,6 +56,11 @@ NetworkManager *MainWindow::getNetworkManager()
     return networkManager;
 }
 
+TopNavigationWidget *MainWindow::getTopNavigationWidget() const
+{
+    return topNavigationWidget;
+}
+
 void MainWindow::switchWidget(QWidget *widget)
 {
     if (widget == nullptr) {

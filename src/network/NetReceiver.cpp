@@ -12,6 +12,7 @@
 #include "mainwindow.h"
 #include "NetworkManager.h"
 #include "models/network/NetworkTransferData.h"
+#include "ui/AuthWidget.h"
 #include "ui/OpePanelWidget.h"
 #include "ui/opePanel/DirectoryWidget.h"
 #include "ui/opePanel/TableWidget.h"
@@ -223,14 +224,61 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
     }
 
     if (networkTransferData.getType() == NetworkTransferData::LOGIN_RESPONSE) {
-        // TODO: 处理登录响应
-        storeAsProperty(buildMessageText(networkTransferData));
+        /**
+         * @brief 处理登录响应
+         * @author NAPH130
+         * @details 成功则切换至工作区并设置用户名；失败则显示错误提示
+         */
+        const bool success = networkTransferData.getSuccess();
+        const QString message = QString::fromStdString(networkTransferData.getMessage());
+        const QString userId = QString::fromStdString(networkTransferData.getId());
+        QMetaObject::invokeMethod(
+            mainWindow,
+            [window = mainWindow, success, message, userId]() {
+                if (window == nullptr) {
+                    return;
+                }
+                if (success) {
+                    // 登录成功，设置用户名并切换至工作区
+                    // 作者：NAPH130
+                    window->getTopNavigationWidget()->setUserName(userId);
+                    window->showWorkspacePage();
+                } else {
+                    // 登录失败，在登录页显示错误消息
+                    // 作者：NAPH130
+                    AuthWidget *authWidget = window->getAuthWidget();
+                    if (authWidget != nullptr) {
+                        authWidget->setConnectionStatus(message);
+                    }
+                }
+            },
+            Qt::QueuedConnection);
         return;
     }
 
     if (networkTransferData.getType() == NetworkTransferData::VERIFY_RESPONSE) {
-        // TODO: 处理连接验证响应
-        storeAsProperty(buildMessageText(networkTransferData));
+        /**
+         * @brief 处理连接验证响应
+         * @author NAPH130
+         * @details 在登录页显示验证结果消息
+         */
+        const bool success = networkTransferData.getSuccess();
+        const QString message = QString::fromStdString(networkTransferData.getMessage());
+        QMetaObject::invokeMethod(
+            mainWindow,
+            [window = mainWindow, success, message]() {
+                if (window == nullptr) {
+                    return;
+                }
+                AuthWidget *authWidget = window->getAuthWidget();
+                if (authWidget != nullptr) {
+                    QString displayMsg = success
+                        ? tr("验证成功 - ") + message
+                        : tr("验证失败 - ") + message;
+                    authWidget->setConnectionStatus(displayMsg);
+                }
+            },
+            Qt::QueuedConnection);
         return;
     }
 

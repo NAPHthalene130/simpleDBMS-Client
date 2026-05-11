@@ -3,6 +3,7 @@
 #include <QWidget>
 
 class MainWindow;
+class QLabel;
 class QLineEdit;
 class QPushButton;
 
@@ -89,6 +90,13 @@ public:
      */
     void setPassword(const QString &password);
 
+    /**
+     * @brief 设置连接状态提示文本
+     * @author NAPH130
+     * @param status 状态文本
+     */
+    void setConnectionStatus(const QString &status);
+
 signals:
     /**
      * @brief 登录成功信号
@@ -134,4 +142,5 @@ private:
 
     QPushButton *testConnectionButton;
     QPushButton *confirmButton;
+    QLabel *statusLabel;
 };

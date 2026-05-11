@@ -70,6 +70,13 @@ public:
     NetworkManager *getNetworkManager();
 
     /**
+     * @brief 获取顶部导航栏
+     * @author NAPH130
+     * @return 顶部导航栏指针
+     */
+    TopNavigationWidget *getTopNavigationWidget() const;
+
+    /**
      * @brief 显示登录认证页
      * @author YuzhSong
      * @details
