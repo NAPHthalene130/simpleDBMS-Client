@@ -102,8 +102,25 @@ void MainWindow::showSettingPage()
 
 void MainWindow::logout()
 {
-    // 作者：YuzhSong，当前仅处理页面切换，后续可在此接入真实登出逻辑。
+    // 作者：NAPH130 — 退出登录时先断开网络连接再跳转到登录页
+    if (networkManager != nullptr) {
+        networkManager->disconnectFromServer();
+    }
     showAuthPage();
+}
+
+void MainWindow::onConnectionLost()
+{
+    // 作者：NAPH130 — 连接断开或超时时安全跳转到登录页并提示
+    QMetaObject::invokeMethod(
+        this,
+        [this]() {
+            showAuthPage();
+            if (authWidget != nullptr) {
+                authWidget->setConnectionStatus(tr("连接丢失，请重新登录"));
+            }
+        },
+        Qt::QueuedConnection);
 }
 
 void MainWindow::initUI()

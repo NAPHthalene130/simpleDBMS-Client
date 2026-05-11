@@ -36,13 +36,21 @@ public:
     ~NetworkManager();
 
     /**
-     * @brief 启动网络模块
+     * @brief 启动网络模块（需先调用 connectToServer）
+     * @author NAPH130
+     * @details 仅启动 NetReceiver 监听线程，不再自动连接。
+     */
+    void start();
+
+    /**
+     * @brief 连接到服务端并启动接收线程
      * @author NAPH130
      * @param serverAddress 服务端地址
      * @param serverPort 服务端端口
-     * @return 是否启动成功
+     * @return 是否连接成功
      */
-    bool start(const std::string &serverAddress = "127.0.0.1", unsigned short serverPort = DEFAULT_SERVER_PORT);
+    bool connectAndStart(const std::string &serverAddress = "127.0.0.1",
+                         unsigned short serverPort = DEFAULT_SERVER_PORT);
 
     /**
      * @brief 停止网络模块
@@ -51,13 +59,19 @@ public:
     void stop();
 
     /**
-     * @brief 连接到服务端
+     * @brief 连接到服务端（仅建立 TCP 连接）
      * @author NAPH130
      * @param serverAddress 服务端地址
      * @param serverPort 服务端端口
      * @return 是否连接成功
      */
     bool connectToServer(const std::string &serverAddress, unsigned short serverPort);
+
+    /**
+     * @brief 断开与服务端的连接
+     * @author NAPH130
+     */
+    void disconnectFromServer();
 
     /**
      * @brief 处理连接断开事件

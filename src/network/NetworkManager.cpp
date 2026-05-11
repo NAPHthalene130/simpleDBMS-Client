@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <asio/connect.hpp>
+#include "mainwindow.h"
 
 NetworkManager::NetworkManager(MainWindow *mainWindow)
     : mainWindow(mainWindow),
@@ -20,7 +21,14 @@ NetworkManager::~NetworkManager()
     netSender = nullptr;
 }
 
-bool NetworkManager::start(const std::string &serverAddress, unsigned short serverPort)
+void NetworkManager::start()
+{
+    if (netReceiver != nullptr) {
+        netReceiver->start();
+    }
+}
+
+bool NetworkManager::connectAndStart(const std::string &serverAddress, unsigned short serverPort)
 {
     if (!connectToServer(serverAddress, serverPort)) {
         return false;
@@ -69,10 +77,30 @@ bool NetworkManager::connectToServer(const std::string &serverAddress, unsigned 
     }
 }
 
+void NetworkManager::disconnectFromServer()
+{
+    if (netReceiver != nullptr) {
+        netReceiver->stop();
+    }
+
+    if (socket != nullptr && socket->is_open()) {
+        std::error_code errorCode;
+        socket->shutdown(asio::ip::tcp::socket::shutdown_both, errorCode);
+        socket->close(errorCode);
+    }
+
+    socket.reset();
+    ioContext.reset();
+}
+
 void NetworkManager::disconnected(std::shared_ptr<asio::ip::tcp::socket> serverSocket)
 {
-    // TODO: Handle reconnect and UI notification when server connection is lost.
     static_cast<void>(serverSocket);
+    // 通知 MainWindow 连接已丢失
+    // 作者：NAPH130
+    if (mainWindow != nullptr) {
+        mainWindow->onConnectionLost();
+    }
 }
 
 NetReceiver *NetworkManager::getNetReceiver()

@@ -108,6 +108,12 @@ public:
     void logout();
 
     /**
+     * @brief 连接丢失时回调，跳转至登录页并提示
+     * @author NAPH130
+     */
+    void onConnectionLost();
+
+    /**
      * @brief 向服务端发送目录结构请求
      * @author NAPH130
      * @details 构造 DIRECTORY_REQUEST 协议消息并通过 NetSender 发送，服务端响应后
