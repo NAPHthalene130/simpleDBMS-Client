@@ -1,26 +1,27 @@
 /**
  * @file DirectoryWidget.h
- * @brief 左侧目录与已打开文件列表组件头文件
- * @details 该组件仅负责左侧导航区域的 UI 展示与交互，不负责文件读写与编辑器内容管理。
- *          通过信号 fileActivated 将“用户选择了哪个文件”通知外部协调者，实现组件解耦。
  * @author YuzhSong
- * @date 2026-04-26
+ * @brief 左侧数据库目录树面板头文件
+ * @details 负责展示数据库对象树（数据库/表/字段等），不负责文件列表与 SQL 编辑执行逻辑
+ * @module ui/opePanel
  */
 
 #pragma once
 
 #include <QWidget>
 
-class QListWidget;
-class QListWidgetItem;
-class MainWindow;
+class QTreeWidget;
+class QTreeWidgetItem;
+class QVariant;
 
 /**
  * @class DirectoryWidget
- * @brief 左侧导航组件
- * @details 负责显示“已打开文件”列表，支持外部添加文件、切换当前文件、响应点击并发出激活信号。
- *          该类不读取文件内容，不保存文件，不运行 SQL。
  * @author YuzhSong
+ * @brief 数据库目录树侧边面板
+ * @details
+ * 1. 负责展示类似 DataGrip/JetBrains Database Explorer 的数据库对象树。
+ * 2. 当前阶段使用前端模拟数据，后续通过 refreshDirectory 接入服务端元数据。
+ * 3. 不负责“已打开文件列表”，该职责已迁移到 FileWidget。
  */
 class DirectoryWidget : public QWidget
 {
@@ -29,51 +30,58 @@ class DirectoryWidget : public QWidget
 public:
     /**
      * @brief 构造函数
-     * @author YuzhSong
-     * @param mainWindow 主窗口指针
      * @param parent 父组件指针
-     */
-    explicit DirectoryWidget(MainWindow* mainWindow, QWidget* parent = nullptr);
-
-    /**
-     * @brief 获取主窗口指针
      * @author YuzhSong
-     * @return 主窗口指针
      */
-    MainWindow* getMainWindow() const;
+    explicit DirectoryWidget(QWidget* parent = nullptr);
 
     /**
-     * @brief 添加已打开文件到列表
+     * @brief 清空目录树
+     * @details 用于切换连接、刷新元数据前重置界面。
+     * @author YuzhSong
+     */
+    void clearDirectory();
+
+    /**
+     * @brief 加载模拟目录树数据
+     * @details 当前阶段仅做前端占位，后续会由真实元数据刷新替换。
+     * @author YuzhSong
+     */
+    void loadMockDirectory();
+
+    /**
+     * @brief 根据外部数据刷新目录树（简化预留接口）
      * @details
-     * 1. 空路径不添加
-     * 2. 已存在路径不重复添加
-     * 3. 新增后自动选中对应项
-     * 4. 列表显示文件名，完整路径存储在 UserRole
+     * 1. 当前使用数据库名列表做轻量演示。
+     * 2. 后续将扩展为接收服务端返回的完整数据库/表/字段元数据结构。
+     * @param databaseNames 数据库名称列表
      * @author YuzhSong
-     * @param filePath 文件完整路径
      */
-    void addOpenedFile(const QString& filePath);
-
-    /**
-     * @brief 设置当前文件选中项
-     * @details 根据完整路径在列表中匹配并选中；不负责加载文件内容。
-     * @author YuzhSong
-     * @param filePath 文件完整路径
-     */
-    void setCurrentFile(const QString& filePath);
+    void refreshDirectory(const QStringList& databaseNames);
 
 signals:
     /**
-     * @brief 文件激活信号
-     * @details 当用户点击或双击列表项时发出，通知外部切换编辑器文件。
+     * @brief 表节点激活信号
+     * @details 用户双击表节点时发出，后续可用于 SQL 生成或表结构查看。
+     * @param databaseName 所属数据库名
+     * @param tableName 表名
      * @author YuzhSong
-     * @param filePath 被激活文件的完整路径
      */
-    void fileActivated(const QString& filePath);
+    void tableActivated(const QString& databaseName, const QString& tableName);
+
+    /**
+     * @brief 字段节点激活信号
+     * @details 用户双击字段节点时发出，后续可用于列信息查看或 SQL 片段插入。
+     * @param databaseName 所属数据库名
+     * @param tableName 所属表名
+     * @param columnName 字段名
+     * @author YuzhSong
+     */
+    void columnActivated(const QString& databaseName, const QString& tableName, const QString& columnName);
 
 private:
     /**
-     * @brief 初始化 UI
+     * @brief 初始化 UI 结构
      * @author YuzhSong
      */
     void initUI();
@@ -86,38 +94,41 @@ private:
 
     /**
      * @brief 初始化样式
-     * @details 仅负责目录面板视觉风格设置，不影响文件列表信号槽与业务行为。
      * @author YuzhSong
      */
     void initStyle();
 
     /**
-     * @brief 按路径查找列表项
+     * @brief 创建数据库节点
+     * @param root 根节点
+     * @param databaseName 数据库名
+     * @return 数据库节点指针
      * @author YuzhSong
-     * @param filePath 文件完整路径
-     * @return 命中返回项指针，否则返回 nullptr
      */
-    QListWidgetItem* findFileItem(const QString& filePath) const;
+    QTreeWidgetItem* createDatabaseNode(QTreeWidgetItem* root, const QString& databaseName);
 
     /**
-     * @brief 规范化路径
-     * @details 统一路径格式用于去重与匹配，避免相对路径/分隔符差异导致重复项。
+     * @brief 创建表节点
+     * @param tablesNode Tables 分类节点
+     * @param databaseName 数据库名
+     * @param tableName 表名
+     * @param columns 字段显示文本列表（如 "id : INT"）
      * @author YuzhSong
-     * @param filePath 原始路径
-     * @return 规范化后的绝对路径
      */
-    QString normalizeFilePath(const QString& filePath) const;
+    void createTableNode(QTreeWidgetItem* tablesNode,
+                         const QString& databaseName,
+                         const QString& tableName,
+                         const QStringList& columns);
 
     /**
-     * @brief 判断两个路径是否表示同一文件
+     * @brief 处理树节点双击事件
+     * @details 根据节点类型判断发出 tableActivated 或 columnActivated。
+     * @param item 被双击节点
      * @author YuzhSong
-     * @param leftPath 左路径
-     * @param rightPath 右路径
-     * @return 相同返回 true，不同返回 false
      */
-    bool isSameFilePath(const QString& leftPath, const QString& rightPath) const;
+    void handleItemDoubleClicked(QTreeWidgetItem* item);
 
 private:
-    MainWindow* mainWindow;       ///< 主窗口引用
-    QListWidget* openedFileList;  ///< 已打开文件列表控件
+    QTreeWidget* directoryTree;  ///< 数据库对象树控件
 };
+
