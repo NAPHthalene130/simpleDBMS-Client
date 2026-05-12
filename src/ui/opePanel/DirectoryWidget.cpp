@@ -2,14 +2,17 @@
  * @file DirectoryWidget.cpp
  * @author YuzhSong
  * @brief 左侧数据库目录树面板实现文件
- * @details 当前阶段只实现前端数据库对象树与接口预留，不实现服务端元数据获取
+ * @details 当前阶段仅实现前端目录树展示与刷新接口预留，不实现真实服务端通信
  * @module ui/opePanel
  */
 
 #include "DirectoryWidget.h"
 
+#include <QDebug>
 #include <QHeaderView>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QPushButton>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QVBoxLayout>
@@ -22,6 +25,8 @@ constexpr int TableNameRole = Qt::UserRole + 3;
 
 DirectoryWidget::DirectoryWidget(QWidget* parent)
     : QWidget(parent)
+    , titleLabel(nullptr)
+    , refreshButton(nullptr)
     , directoryTree(nullptr)
 {
     initUI();
@@ -36,8 +41,24 @@ void DirectoryWidget::initUI()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(10);
 
-    auto* titleLabel = new QLabel(tr("数据库目录"), this);
+    // 作者：YuzhSong
+    // 顶部区域采用水平布局：左侧标题，右侧 Refresh 按钮。
+    // 该布局仅作用于 DirectoryWidget 内部，不修改其他面板布局。
+    auto* topLayout = new QHBoxLayout();
+    topLayout->setContentsMargins(0, 0, 0, 0);
+    topLayout->setSpacing(8);
+
+    titleLabel = new QLabel(tr("数据库目录"), this);
     titleLabel->setObjectName("directoryTitleLabel");
+
+    refreshButton = new QPushButton(tr("Refresh"), this);
+    refreshButton->setObjectName("directoryRefreshButton");
+    refreshButton->setCursor(Qt::PointingHandCursor);
+    refreshButton->setToolTip(tr("刷新数据库目录"));
+
+    topLayout->addWidget(titleLabel, 0);
+    topLayout->addStretch(1);
+    topLayout->addWidget(refreshButton, 0);
 
     directoryTree = new QTreeWidget(this);
     directoryTree->setObjectName("directoryTreeWidget");
@@ -47,21 +68,26 @@ void DirectoryWidget::initUI()
     directoryTree->setUniformRowHeights(true);
     directoryTree->setExpandsOnDoubleClick(true);
     // 作者：YuzhSong
-    // 保留树层级缩进，但将每层缩进宽度调小，避免深层节点名称被挤出可视区域。
+    // 保留原有目录树层级缩进策略，避免深层节点文本被挤出可视区域。
     directoryTree->setIndentation(12);
     directoryTree->header()->setStretchLastSection(true);
 
-    mainLayout->addWidget(titleLabel);
+    mainLayout->addLayout(topLayout);
     mainLayout->addWidget(directoryTree, 1);
 }
 
 void DirectoryWidget::initConnections()
 {
     // 作者：YuzhSong
-    // 当前只发出 table/column 激活信号做接口预留，不直接耦合 EditorWidget 业务逻辑。
+    // 目录树节点双击只负责发出 table/column 激活信号，不直接耦合 SQL 编辑器逻辑。
     connect(directoryTree, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem* item, int) {
         handleItemDoubleClicked(item);
     });
+
+    // 作者：YuzhSong
+    // Refresh 按钮点击后进入 requestRefreshDirectory()。
+    // 该入口仅发信号并执行本地占位刷新，不直接发起网络请求，方便后续独立接入服务端模块。
+    connect(refreshButton, &QPushButton::clicked, this, &DirectoryWidget::requestRefreshDirectory);
 }
 
 void DirectoryWidget::initStyle()
@@ -79,6 +105,20 @@ void DirectoryWidget::initStyle()
         "    border: 1px solid #3A3D42;"
         "    border-radius: 8px;"
         "    padding: 8px 10px;"
+        "}"
+        "QPushButton#directoryRefreshButton {"
+        "    color: #D5D8DD;"
+        "    background-color: #2E3136;"
+        "    border: 1px solid #3A3D42;"
+        "    border-radius: 6px;"
+        "    padding: 6px 12px;"
+        "    font-weight: 600;"
+        "}"
+        "QPushButton#directoryRefreshButton:hover {"
+        "    background-color: #383C42;"
+        "}"
+        "QPushButton#directoryRefreshButton:pressed {"
+        "    background-color: #2A2D31;"
         "}"
         "QTreeWidget#directoryTreeWidget {"
         "    background-color: #111315;"
@@ -111,7 +151,7 @@ void DirectoryWidget::clearDirectory()
 void DirectoryWidget::loadMockDirectory()
 {
     // 作者：YuzhSong
-    // 当前阶段使用前端模拟树结构，后续由 refreshDirectory(服务端元数据) 替换。
+    // 当前阶段使用前端模拟目录树结构，后续由 refreshDirectory(服务端元数据) 替换。
     clearDirectory();
 
     auto* rootNode = new QTreeWidgetItem(directoryTree);
@@ -146,11 +186,28 @@ void DirectoryWidget::loadMockDirectory()
     directoryTree->expandItem(schoolNode);
 }
 
+void DirectoryWidget::requestRefreshDirectory()
+{
+    // 作者：YuzhSong
+    // 先发出 refreshRequested 信号，让外部模块（例如 OpePanelWidget/网络层）感知“用户请求刷新”。
+    // 这里不直接请求服务端，避免把网络职责塞入目录控件内部。
+    emit refreshRequested();
+
+    // 作者：YuzhSong
+    // 当前阶段仅做占位行为：日志 + 模拟刷新，便于前端联调验证按钮交互。
+    qDebug() << "请求刷新数据库目录";
+
+    // 作者：YuzhSong
+    // TODO: 后续应由服务端返回真实数据库元数据后调用 refreshDirectory(...)。
+    //       当前为了保持演示效果，暂时沿用 loadMockDirectory()。
+    loadMockDirectory();
+}
+
 void DirectoryWidget::refreshDirectory(const QStringList& databaseNames)
 {
     // 作者：YuzhSong
-    // TODO：后续这里会接收服务端完整元数据（数据库/表/字段/索引等）并重建树结构。
-    // 当前先用简化数据库名列表占位，保证接口已预留且不影响编译。
+    // TODO: 后续这里会接收服务端完整元数据（数据库/表/字段/索引等）并重建树结构。
+    // 作者：YuzhSong，当前仅预留简单版本（QStringList），后续应替换为数据库元数据模型结构。
     clearDirectory();
 
     auto* rootNode = new QTreeWidgetItem(directoryTree);
