@@ -49,6 +49,7 @@ public:
      * @return 主窗口指针
      */
     MainWindow* getMainWindow() const;
+    void reloadEditorSettingsFromLocal();
 
     /**
      * @brief 执行 SQL 语句入口
@@ -57,6 +58,8 @@ public:
      * @param sql 要执行的 SQL 文本
      */
     void executeSql(const QString& sql);
+
+    void refreshTheme();
 
 public slots:
     /**
@@ -181,6 +184,7 @@ private:
      * @author YuzhSong
      */
     void setupEditor();
+    void applyEditorSettingsFromLocal();
 
     /**
      * @brief 设置工具栏
@@ -214,6 +218,7 @@ private:
      * @author YuzhSong
      */
     void runCurrentSql();
+    bool confirmDangerousSqlIfNeeded(const QString &sql) const;
 
     /**
      * @brief 从文件读取内容到编辑器

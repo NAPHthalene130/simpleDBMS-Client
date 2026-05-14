@@ -97,6 +97,8 @@ public:
      */
     void setConnectionStatus(const QString &status);
 
+    void refreshTheme();
+
 signals:
     /**
      * @brief 登录成功信号

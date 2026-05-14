@@ -7,8 +7,10 @@
  */
 
 #include "SqlEditor.h"
+
 #include "LineNumberArea.h"
 #include "SqlHighlighter.h"
+#include "ui/ThemeManager.h"
 
 #include <QAbstractItemView>
 #include <QAbstractTextDocumentLayout>
@@ -32,6 +34,7 @@ SqlEditor::SqlEditor(QWidget* parent)
     , lineNumberArea(nullptr)
     , sqlHighlighter(nullptr)
     , sqlCompleter(nullptr)
+    , lineNumberVisible(true)
 {
     // 初始化行号显示区域
     setupLineNumberArea();
@@ -45,13 +48,7 @@ SqlEditor::SqlEditor(QWidget* parent)
     // 设置等宽字体，适合代码编辑
     QFont editorFont("Consolas", 12);
     setFont(editorFont);
-    setStyleSheet(
-        "QPlainTextEdit {"
-        "    background-color: #111315;"
-        "    color: #E6E6E6;"
-        "    border: none;"
-        "}"
-    );
+    setStyleSheet(ThemeManager::sqlEditor());
 
     // 设置 Tab 宽度为 4 个空格
     setTabStopDistance(4 * fontMetrics().horizontalAdvance(' '));
@@ -171,6 +168,7 @@ void SqlEditor::setupCompleter()
     
     // 创建补全器并设置数据模型
     sqlCompleter = new QCompleter(sqlKeywords, this);
+    baseKeywords = sqlKeywords;
 
     // 设置不区分大小写匹配
     sqlCompleter->setCaseSensitivity(Qt::CaseInsensitive);
@@ -415,6 +413,54 @@ void SqlEditor::resizeEvent(QResizeEvent* event)
  */
 void SqlEditor::keyPressEvent(QKeyEvent* event)
 {
+    // ========== 自动配对括号与引号 ==========
+    const QString text = event->text();
+    if (text == QStringLiteral("(")) {
+        QTextCursor cursor = textCursor();
+        cursor.insertText("()");
+        cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, 1);
+        setTextCursor(cursor);
+        event->accept();
+        triggerCompletion();
+        return;
+    }
+    if (text == QStringLiteral("[")) {
+        QTextCursor cursor = textCursor();
+        cursor.insertText("[]");
+        cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, 1);
+        setTextCursor(cursor);
+        event->accept();
+        triggerCompletion();
+        return;
+    }
+    if (text == QStringLiteral("{")) {
+        QTextCursor cursor = textCursor();
+        cursor.insertText("{}");
+        cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, 1);
+        setTextCursor(cursor);
+        event->accept();
+        triggerCompletion();
+        return;
+    }
+    if (text == QStringLiteral("\"")) {
+        QTextCursor cursor = textCursor();
+        cursor.insertText("\"\"");
+        cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, 1);
+        setTextCursor(cursor);
+        event->accept();
+        triggerCompletion();
+        return;
+    }
+    if (text == QStringLiteral("'")) {
+        QTextCursor cursor = textCursor();
+        cursor.insertText("''");
+        cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, 1);
+        setTextCursor(cursor);
+        event->accept();
+        triggerCompletion();
+        return;
+    }
+
     // ========== 自动补全相关逻辑 ==========
     
     // 如果补全框当前可见，优先处理补全相关的键盘交互
@@ -504,7 +550,7 @@ void SqlEditor::keyPressEvent(QKeyEvent* event)
         return;
     }
     
-    // 其他键：调用默认处理
+    // 调用默认处理
     QPlainTextEdit::keyPressEvent(event);
     
     // 输入字母或数字时触发补全
@@ -568,8 +614,11 @@ void SqlEditor::updateLineNumberArea(const QRect& rect, int dy)
  */
 void SqlEditor::updateLineNumberAreaWidth(int /* newBlockCount */)
 {
-    // 设置编辑区左侧边距，为行号留出空间
-    setViewportMargins(lineNumberArea->lineNumberAreaWidth(), 0, 0, 0);
+    if (lineNumberVisible && lineNumberArea != nullptr) {
+        setViewportMargins(lineNumberArea->lineNumberAreaWidth(), 0, 0, 0);
+    } else {
+        setViewportMargins(0, 0, 0, 0);
+    }
 }
 
 /**
@@ -579,30 +628,22 @@ void SqlEditor::updateLineNumberAreaWidth(int /* newBlockCount */)
  */
 void SqlEditor::highlightCurrentLine()
 {
-    // 获取额外选择区域（用于高亮）
     QList<QTextEdit::ExtraSelection> extraSelections;
 
-    // 确保编辑器不是只读模式
     if (!isReadOnly()) {
         QTextEdit::ExtraSelection selection;
 
-        // 设置高亮背景色（中灰色，柔和不刺眼）
-        QColor lineColor = QColor("#1A1F26");
+        const QColor lineColor = ThemeManager::isDark() ? QColor("#1A1F26") : QColor("#E8EDF4");
 
-        // 设置选择格式
         selection.format.setBackground(lineColor);
         selection.format.setProperty(QTextFormat::FullWidthSelection, true);
         selection.cursor = textCursor();
-        // 清除选区，只保留光标位置
         selection.cursor.clearSelection();
 
         extraSelections.append(selection);
     }
 
-    // 应用高亮选择
     setExtraSelections(extraSelections);
-
-    // 刷先行号区域（更新当前行标识）
     lineNumberArea->update();
 }
 
@@ -639,51 +680,48 @@ void SqlEditor::lineNumberAreaWidthUpdate()
  */
 void SqlEditor::lineNumberAreaPaintEvent(QPaintEvent* event)
 {
+    if (!lineNumberVisible) {
+        return;
+    }
+
     QPainter painter(lineNumberArea);
 
-    // 填充行号区域背景（深灰色，与编辑器背景一致）
-    painter.fillRect(event->rect(), QColor("#5A5A5A"));
+    const bool dark = ThemeManager::isDark();
+    const QColor bgColor = dark ? QColor("#5A5A5A") : QColor("#E8ECF0");
+    const QColor defaultFg = dark ? QColor("#DADADA") : QColor("#8A92A0");
+    const QColor currentFg = dark ? QColor("#FFFFFF") : QColor("#3B71CA");
 
-    // 获取可见的第一个文本块
+    painter.fillRect(event->rect(), bgColor);
+
     QTextBlock block = firstVisibleBlock();
     int blockNumber = block.blockNumber();
-
-    // 获取第一个文本块的顶部位置
     qreal top = blockBoundingGeometry(block).translated(contentOffset()).top();
     qreal bottom = top + blockBoundingRect(block).height();
 
-    // 获取当前光标所在行号（用于高亮当前行行号）
     int currentLineNumber = textCursor().blockNumber();
 
-    // 获取字体用于设置样式
     QFont font = painter.font();
     font.setBold(false);
     painter.setFont(font);
 
-    // 遍历可见区域内的所有行
     while (block.isValid() && top <= event->rect().bottom()) {
-        // 如果该行在可见区域内，则绘制行号
         if (block.isVisible() && bottom >= event->rect().top()) {
-            // 行号从 1 开始
             QString number = QString::number(blockNumber + 1);
 
-            // 当前行使用不同颜色和高亮效果
             if (blockNumber == currentLineNumber) {
-                painter.setPen(QColor("#FFFFFF"));
+                painter.setPen(currentFg);
                 QFont boldFont = painter.font();
                 boldFont.setBold(true);
                 painter.setFont(boldFont);
             } else {
-                painter.setPen(QColor("#DADADA"));
+                painter.setPen(defaultFg);
             }
 
-            // 绘制行号文本（右对齐）
             painter.drawText(0, qRound(top),
                            lineNumberArea->width() - 4, fontMetrics().height(),
                            Qt::AlignRight | Qt::AlignVCenter,
                            number);
 
-            // 恢复字体
             if (blockNumber == currentLineNumber) {
                 QFont normalFont = painter.font();
                 normalFont.setBold(false);
@@ -691,10 +729,8 @@ void SqlEditor::lineNumberAreaPaintEvent(QPaintEvent* event)
             }
         }
 
-        // 移动到下一个文本块
         block = block.next();
         top = bottom;
-        // 先检查 block 是否有效，再调用 blockBoundingRect
         if (block.isValid()) {
             bottom = top + blockBoundingRect(block).height();
         }
@@ -709,6 +745,42 @@ void SqlEditor::lineNumberAreaPaintEvent(QPaintEvent* event)
  */
 void SqlEditor::updateEditorViewportMargins()
 {
-    // 设置左侧边距为行号宽度
-    setViewportMargins(lineNumberArea->lineNumberAreaWidth(), 0, 0, 0);
+    updateLineNumberAreaWidth(0);
+}
+
+void SqlEditor::setAutoWrapEnabled(bool enabled)
+{
+    setLineWrapMode(enabled ? QPlainTextEdit::WidgetWidth : QPlainTextEdit::NoWrap);
+}
+
+void SqlEditor::setLineNumberVisible(bool enabled)
+{
+    lineNumberVisible = enabled;
+    if (lineNumberArea != nullptr) {
+        lineNumberArea->setVisible(enabled);
+    }
+    updateLineNumberAreaWidth(0);
+    viewport()->update();
+}
+
+void SqlEditor::setCompletionNames(const QStringList &names)
+{
+    if (!sqlCompleter || names.isEmpty()) {
+        return;
+    }
+
+    QStringList allWords = baseKeywords;
+    allWords.append(names);
+    allWords.removeDuplicates();
+
+    QAbstractItemModel *oldModel = sqlCompleter->model();
+    sqlCompleter->setModel(new QStringListModel(allWords, sqlCompleter));
+    if (oldModel != nullptr) {
+        oldModel->deleteLater();
+    }
+}
+
+void SqlEditor::refreshTheme()
+{
+    setStyleSheet(ThemeManager::sqlEditor());
 }

@@ -13,6 +13,8 @@ class AiPanelWidget : public QWidget
 public:
     explicit AiPanelWidget(QWidget* parent = nullptr);
 
+    void refreshTheme();
+
 private:
     void initUI();
     void initStyle();

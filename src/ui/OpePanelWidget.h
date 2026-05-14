@@ -38,6 +38,8 @@ public:
     TerminalWidget* getTerminalWidget() const;
     QStackedWidget* getMainDisplayStackedWidget() const;
 
+    void refreshTheme();
+
 public slots:
     void toggleDirectoryPanel();
     void collapseDirectoryPanel();

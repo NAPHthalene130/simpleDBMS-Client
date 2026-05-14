@@ -60,6 +60,8 @@ public:
      */
     void setUserName(const QString &userName);
 
+    void refreshTheme();
+
 signals:
     /**
      * @brief 请求切换到工作区

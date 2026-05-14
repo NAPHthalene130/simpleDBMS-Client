@@ -71,6 +71,8 @@ public:
      */
     void refreshFromServer(const std::vector<DatabaseNode>& databases);
 
+    void refreshTheme();
+
 signals:
     /**
      * @brief 表节点激活信号

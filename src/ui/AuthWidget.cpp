@@ -13,6 +13,7 @@
 #include "models/network/NetworkTransferData.h"
 #include "network/NetworkManager.h"
 #include "network/NetSender.h"
+#include "ThemeManager.h"
 /**
  * @brief 构造函数
  * @author NAPH130
@@ -192,90 +193,7 @@ void AuthWidget::initUI()
  */
 void AuthWidget::applyStyles()
 {
-    setStyleSheet(QString(
-        "QWidget {"
-        "    background-color: #1E1E1E;"
-        "    color: #D4D4D4;"
-        "}"
-        "QWidget#authCard {"
-        "    background-color: #2D2D30;"
-        "    border: 1px solid #3E3E42;"
-        "    border-radius: 8px;"
-        "}"
-        "QWidget#authCard QLabel {"
-        "    background-color: #2D2D30;"
-        "    color: #CCCCCC;"
-        "}"
-        "QLabel#authHeaderLabel {"
-        "    font-size: 18px;"
-        "    font-weight: bold;"
-        "    color: #E0E0E0;"
-        "    padding-bottom: 4px;"
-        "}"
-        "QLabel#formLabel {"
-        "    font-size: 13px;"
-        "    min-width: 70px;"
-        "}"
-        "QLineEdit {"
-        "    background-color: #3C3C3C;"
-        "    border: 1px solid #555555;"
-        "    border-radius: 4px;"
-        "    padding: 6px 10px;"
-        "    font-size: 13px;"
-        "    color: #E0E0E0;"
-        "    selection-background-color: #264F78;"
-        "}"
-        "QLineEdit:focus {"
-        "    border: 1px solid #007ACC;"
-        "}"
-        "QLineEdit:disabled {"
-        "    background-color: #2A2A2A;"
-        "    color: #666666;"
-        "}"
-        "QPushButton {"
-        "    font-size: 13px;"
-        "    border: 1px solid #555555;"
-        "    border-radius: 4px;"
-        "    padding: 6px 16px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #505050;"
-        "}"
-        "QPushButton:pressed {"
-        "    background-color: #404040;"
-        "}"
-        "QPushButton#btnTestConnection {"
-        "    background-color: #3C3C3C;"
-        "    color: #E0E0E0;"
-        "    border: 1px solid #555555;"
-        "}"
-        "QPushButton#btnTestConnection:hover {"
-        "    background-color: #505050;"
-        "    border: 1px solid #007ACC;"
-        "}"
-        "QPushButton#btnTestConnection:pressed {"
-        "    background-color: #404040;"
-        "}"
-        "QPushButton#btnConfirm {"
-        "    background-color: #0E639C;"
-        "    color: #FFFFFF;"
-        "    border: 1px solid #0E639C;"
-        "    font-weight: bold;"
-        "}"
-        "QPushButton#btnConfirm:hover {"
-        "    background-color: #1177BB;"
-        "    border: 1px solid #1177BB;"
-        "}"
-        "QPushButton#btnConfirm:pressed {"
-        "    background-color: #0D5689;"
-        "}"
-        "QLabel#authStatusLabel {"
-        "    color: #E0A030;"
-        "    font-size: 12px;"
-        "    background-color: transparent;"
-        "    padding: 4px 0px;"
-        "}"
-    ));
+    setStyleSheet(ThemeManager::authWidget());
 }
 
 /**
@@ -397,4 +315,9 @@ void AuthWidget::onConfirmConnection()
 
     sender->send(serverSocket, requestData.toJson());
     setConnectionStatus(tr("正在登录..."));
+}
+
+void AuthWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::authWidget());
 }

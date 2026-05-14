@@ -67,6 +67,8 @@ public:
 
     PanelType currentPanelType() const;
 
+    void refreshTheme();
+
 private:
     void initUI();
     void initStyle();

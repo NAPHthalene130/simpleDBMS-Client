@@ -8,6 +8,7 @@
  */
 
 #include "EditorWidget.h"
+#include "ui/ThemeManager.h"
 
 #include "SqlEditor.h"
 #include "mainwindow.h"
@@ -26,6 +27,8 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRegularExpression>
+#include <QSettings>
 #include <QShortcut>
 #include <QSizePolicy>
 #include <QStringConverter>
@@ -57,6 +60,15 @@ MainWindow* EditorWidget::getMainWindow() const
     return mainWindow;
 }
 
+void EditorWidget::reloadEditorSettingsFromLocal()
+{
+    applyEditorSettingsFromLocal();
+}
+
+/**
+ * @brief 初始化整体 UI
+ * @author YuzhSong
+ */
 void EditorWidget::initUI()
 {
     setObjectName("editorWidgetRoot");
@@ -70,47 +82,7 @@ void EditorWidget::initUI()
     toolbar->setIconSize(QSize(16, 16));
     toolbar->setFixedHeight(44);
     toolbar->setObjectName("editorToolbar");
-    toolbar->setStyleSheet(
-        "EditorWidget#editorWidgetRoot {"
-        "    background-color: #111315;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 14px;"
-        "}"
-        "QToolBar#editorToolbar {"
-        "    background-color: #111315;"
-        "    border: none;"
-        "    border-top-left-radius: 14px;"
-        "    border-top-right-radius: 14px;"
-        "    padding: 4px 6px;"
-        "    spacing: 4px;"
-        "}"
-        "QToolBar#editorToolbar QToolButton {"
-        "    background-color: #1A1C1E;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 8px;"
-        "    padding: 4px 10px;"
-        "    color: #F0F0F0;"
-        "}"
-        "QToolBar#editorToolbar QToolButton:hover {"
-        "    background-color: #25292D;"
-        "}"
-        "QToolBar#editorToolbar QToolButton#btnRun {"
-        "    background-color: #3FB950;"
-        "    border: 1px solid #2F9E44;"
-        "    color: #FFFFFF;"
-        "    font-weight: 600;"
-        "}"
-        "QWidget#editorToolbarSpacer {"
-        "    background-color: #111315;"
-        "    border: none;"
-        "}"
-        "QPlainTextEdit#editorSqlInput {"
-        "    background-color: #111315;"
-        "    border: none;"
-        "    border-bottom-left-radius: 14px;"
-        "    border-bottom-right-radius: 14px;"
-        "}"
-    );
+    toolbar->setStyleSheet(ThemeManager::editorPanel());
 
     sqlEditor = new SqlEditor(this);
     sqlEditor->setObjectName("editorSqlInput");
@@ -148,6 +120,7 @@ void EditorWidget::initConnections()
 void EditorWidget::setupEditor()
 {
     sqlEditor->setPlaceholderText("\n-- Enter your SQL here\n-- 例如：SELECT * FROM table_name;");
+    applyEditorSettingsFromLocal();
 }
 
 void EditorWidget::setupToolbar()
@@ -283,7 +256,21 @@ void EditorWidget::runCurrentSql()
 
 void EditorWidget::executeSql(const QString& sql)
 {
-    if (mainWindow == nullptr) return;
+    const QString trimmedSql = sql.trimmed();
+    if (trimmedSql.isEmpty()) {
+        return;
+    }
+
+    if (!confirmDangerousSqlIfNeeded(trimmedSql)) {
+        return;
+    }
+
+    if (mainWindow == nullptr) {
+        qWarning() << QString("[%1][ERROR] MainWindow is null, cannot send SQL.")
+                          .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+        return;
+    }
+
     NetworkManager* networkManager = mainWindow->getNetworkManager();
     if (networkManager == nullptr) return;
     NetSender* netSender = networkManager->getNetSender();
@@ -293,9 +280,82 @@ void EditorWidget::executeSql(const QString& sql)
 
     NetworkTransferData data;
     data.setType(NetworkTransferData::SQL_EXEC_REQUEST);
-    data.setSql(sql.toStdString());
+    data.setSql(trimmedSql.toStdString());
+
     netSender->send(socket, data.toJson());
-    emit sqlExecuted(sql);
+
+    emit sqlExecuted(trimmedSql);
+
+    const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+    const bool keepEditorContent = settings.value("habit/keepEditorContent", true).toBool();
+    if (!keepEditorContent) {
+        sqlEditor->clear();
+    }
+
+    qDebug() << QString("[%1][DEBUG] SQL sent to server: %2")
+                    .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"), trimmedSql);
+}
+
+void EditorWidget::applyEditorSettingsFromLocal()
+{
+    const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+    QString fontFamily = settings.value("editor/fontFamily", tr("默认")).toString();
+    if (fontFamily.trimmed().isEmpty() || fontFamily == tr("默认")) {
+        fontFamily = QStringLiteral("Consolas");
+    }
+
+    const int fontSize = settings.value("editor/fontSize", QStringLiteral("14")).toString().toInt();
+    const bool autoWrap = settings.value("editor/autoWrap", true).toBool();
+    const bool showLineNumber = settings.value("editor/showLineNumber", true).toBool();
+
+    QFont editorFont(fontFamily, fontSize > 0 ? fontSize : 14);
+    sqlEditor->setFont(editorFont);
+    sqlEditor->setAutoWrapEnabled(autoWrap);
+    sqlEditor->setLineNumberVisible(showLineNumber);
+}
+
+bool EditorWidget::confirmDangerousSqlIfNeeded(const QString &sql) const
+{
+    const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+    const bool dangerousSqlWarning = settings.value("habit/dangerousSqlWarning", true).toBool();
+    if (!dangerousSqlWarning) {
+        return true;
+    }
+
+    const QString normalizedSql = sql.trimmed();
+    bool needConfirm = false;
+    QString reason;
+
+    if (QRegularExpression("\\bDROP\\b", QRegularExpression::CaseInsensitiveOption).match(normalizedSql).hasMatch()) {
+        needConfirm = true;
+        reason = tr("检测到 DROP 语句");
+    } else if (QRegularExpression("\\bTRUNCATE\\b", QRegularExpression::CaseInsensitiveOption).match(normalizedSql).hasMatch()) {
+        needConfirm = true;
+        reason = tr("检测到 TRUNCATE 语句");
+    } else if (QRegularExpression("\\bDELETE\\b", QRegularExpression::CaseInsensitiveOption).match(normalizedSql).hasMatch()) {
+        needConfirm = true;
+        if (!QRegularExpression("\\bWHERE\\b", QRegularExpression::CaseInsensitiveOption).match(normalizedSql).hasMatch()) {
+            reason = tr("检测到无 WHERE 条件的 DELETE 语句");
+        } else {
+            reason = tr("检测到 DELETE 语句");
+        }
+    } else if (QRegularExpression("\\bUPDATE\\b", QRegularExpression::CaseInsensitiveOption).match(normalizedSql).hasMatch()
+               && !QRegularExpression("\\bWHERE\\b", QRegularExpression::CaseInsensitiveOption).match(normalizedSql).hasMatch()) {
+        needConfirm = true;
+        reason = tr("检测到无 WHERE 条件的 UPDATE 语句");
+    }
+
+    if (!needConfirm) {
+        return true;
+    }
+
+    const QMessageBox::StandardButton reply = QMessageBox::warning(
+        const_cast<EditorWidget *>(this),
+        tr("危险 SQL 提醒"),
+        tr("%1，是否继续执行？").arg(reason),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No);
+    return reply == QMessageBox::Yes;
 }
 
 bool EditorWidget::loadFile(const QString& filePath)
@@ -496,4 +556,10 @@ void EditorWidget::closeFileInternal(const QString& fileKey)
     const QString nextFileKey = openedFiles.firstKey();
     loadFileStateToEditor(nextFileKey);
     emit currentFileChanged(nextFileKey);
+}
+
+void EditorWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::editorPanel());
+    if (sqlEditor) sqlEditor->refreshTheme();
 }

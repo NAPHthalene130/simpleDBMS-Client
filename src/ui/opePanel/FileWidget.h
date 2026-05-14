@@ -86,6 +86,8 @@ public:
      */
     QListWidgetItem* findFileItem(const QString& fileKey) const;
 
+    void refreshTheme();
+
 signals:
     /**
      * @brief 文件激活信号

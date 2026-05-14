@@ -1,4 +1,5 @@
 #include "AiPanelWidget.h"
+#include "ui/ThemeManager.h"
 
 #include <QLabel>
 #include <QPlainTextEdit>
@@ -39,24 +40,10 @@ void AiPanelWidget::initStyle()
     setMinimumWidth(0);
     setMaximumWidth(QWIDGETSIZE_MAX);
 
-    setStyleSheet(
-        "AiPanelWidget {"
-        "    background-color: #111315;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 14px;"
-        "}"
-        "QLabel {"
-        "    color: #B8BDC4;"
-        "    background-color: transparent;"
-        "    font-size: 15px;"
-        "    font-weight: 700;"
-        "}"
-        "QPlainTextEdit#aiAssistantContentTextEdit {"
-        "    background-color: #111315;"
-        "    color: #B8BDC4;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 12px;"
-        "    padding: 10px;"
-        "}"
-    );
+    setStyleSheet(ThemeManager::sidePanel());
+}
+
+void AiPanelWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::sidePanel());
 }

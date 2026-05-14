@@ -9,6 +9,7 @@ class QStackedWidget;
 class SettingWidget;
 class TopNavigationWidget;
 class QWidget;
+class QCloseEvent;
 
 /**
  * @class MainWindow
@@ -135,6 +136,13 @@ public:
      */
     void sendDirectoryRequest();
 
+    /**
+     * @brief 应用全局设置（主题/字号/缩放）
+     * @author Qi
+     * @details 从 QSettings 读取并即时应用主题、字号、缩放
+     */
+    void applyGlobalSettings();
+
 private:
     /**
      * @brief 初始化主窗口 UI 结构
@@ -159,6 +167,9 @@ private:
      * @author YuzhSong
      */
     void initStyle();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
 
 private:
     QStackedWidget *rootStackedWidget;

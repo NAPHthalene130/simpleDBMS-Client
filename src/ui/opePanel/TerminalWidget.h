@@ -62,6 +62,8 @@ public:
      */
     void clearTerminal();
 
+    void refreshTheme();
+
 signals:
     /**
      * @brief SQL 提交信号

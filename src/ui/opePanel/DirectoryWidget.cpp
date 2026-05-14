@@ -7,6 +7,7 @@
  */
 
 #include "DirectoryWidget.h"
+#include "ui/ThemeManager.h"
 
 #include <QHeaderView>
 #include <QLabel>
@@ -67,41 +68,7 @@ void DirectoryWidget::initConnections()
 
 void DirectoryWidget::initStyle()
 {
-    setStyleSheet(
-        "DirectoryWidget {"
-        "    background-color: #111315;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 14px;"
-        "}"
-        "QLabel#directoryTitleLabel {"
-        "    color: #D5D8DD;"
-        "    font-weight: 700;"
-        "    background-color: #2F3134;"
-        "    border: 1px solid #3A3D42;"
-        "    border-radius: 8px;"
-        "    padding: 8px 10px;"
-        "}"
-        "QTreeWidget#directoryTreeWidget {"
-        "    background-color: #111315;"
-        "    color: #F0F0F0;"
-        "    border: 1px solid #1B1D20;"
-        "    border-radius: 10px;"
-        "    padding: 6px;"
-        "    outline: none;"
-        "}"
-        "QTreeWidget#directoryTreeWidget::item {"
-        "    padding: 3px 6px;"
-        "    margin: 1px 2px;"
-        "    border-radius: 4px;"
-        "}"
-        "QTreeWidget#directoryTreeWidget::item:hover {"
-        "    background-color: #34373C;"
-        "}"
-        "QTreeWidget#directoryTreeWidget::item:selected {"
-        "    background-color: #2F64A8;"
-        "    color: #FFFFFF;"
-        "}"
-    );
+    setStyleSheet(ThemeManager::sidePanel());
 }
 
 void DirectoryWidget::clearDirectory()
@@ -295,4 +262,9 @@ void DirectoryWidget::handleItemDoubleClicked(QTreeWidgetItem* item)
         const QString columnName = columnText.section(':', 0, 0).trimmed();
         emit columnActivated(dbName, tableName, columnName);
     }
+}
+
+void DirectoryWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::sidePanel());
 }

@@ -7,6 +7,7 @@
  */
 
 #include "SidePanelContainer.h"
+#include "ui/ThemeManager.h"
 
 #include "DirectoryWidget.h"
 #include "FileWidget.h"
@@ -146,5 +147,13 @@ LogWidget* SidePanelContainer::logWidget() const
 SidePanelContainer::PanelType SidePanelContainer::currentPanelType() const
 {
     return m_currentPanelType;
+}
+
+void SidePanelContainer::refreshTheme()
+{
+    setStyleSheet("SidePanelContainer { background-color: transparent; border: none; }");
+    if (directoryWidget()) directoryWidget()->refreshTheme();
+    if (fileWidget()) fileWidget()->refreshTheme();
+    if (logWidget()) logWidget()->refreshTheme();
 }
 

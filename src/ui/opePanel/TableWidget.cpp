@@ -1,9 +1,12 @@
 #include "TableWidget.h"
+#include "ui/ThemeManager.h"
 
 #include <algorithm>
 
 #include <QLabel>
 #include <QHeaderView>
+#include <QHBoxLayout>
+#include <QPushButton>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
@@ -12,6 +15,7 @@ TableWidget::TableWidget(MainWindow *mainWindow, QWidget *parent)
     : QWidget(parent),
       mainWindow(mainWindow),
       messageLabel(new QLabel(this)),
+      backButton(new QPushButton(tr("← 返回编辑器"), this)),
       tableViewWidget(new QTableWidget(this))
 {
     auto *layout = new QVBoxLayout(this);
@@ -20,6 +24,16 @@ TableWidget::TableWidget(MainWindow *mainWindow, QWidget *parent)
 
     messageLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     messageLabel->setText(tr("Ready."));
+
+    backButton->setObjectName("tableBackButton");
+    backButton->setCursor(Qt::PointingHandCursor);
+    backButton->setFixedHeight(26);
+
+    auto *bottomLayout = new QHBoxLayout();
+    bottomLayout->setContentsMargins(0, 0, 0, 0);
+    bottomLayout->setSpacing(0);
+    bottomLayout->addWidget(messageLabel, 1);
+    bottomLayout->addWidget(backButton, 0);
 
     tableViewWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tableViewWidget->setSelectionBehavior(QAbstractItemView::SelectItems);
@@ -36,7 +50,9 @@ TableWidget::TableWidget(MainWindow *mainWindow, QWidget *parent)
     tableViewWidget->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
 
     layout->addWidget(tableViewWidget, 1);
-    layout->addWidget(messageLabel);
+    layout->addLayout(bottomLayout);
+
+    connect(backButton, &QPushButton::clicked, this, &TableWidget::backToEditorRequested);
 
     applyTableStyle();
 }
@@ -93,34 +109,10 @@ void TableWidget::showMessage(const QString &message)
 
 void TableWidget::applyTableStyle()
 {
-    setStyleSheet(
-        "QWidget { background-color: #2b2d30; color: #c9ccd1; }"
-        "QLabel {"
-        "  color: #8f949d;"
-        "  font-size: 11px;"
-        "  padding: 2px 4px;"
-        "}"
-        "QTableWidget {"
-        "  background-color: #31343a;"
-        "  alternate-background-color: #2f3238;"
-        "  color: #d3d6dc;"
-        "  gridline-color: #3b3e45;"
-        "  selection-background-color: #355a85;"
-        "  selection-color: #f2f4f8;"
-        "  border: 1px solid #3b3e45;"
-        "  font-size: 12px;"
-        "}"
-        "QTableWidget::item { padding: 2px 6px; }"
-        "QHeaderView::section {"
-        "  background-color: #2a2d31;"
-        "  color: #c1c6cf;"
-        "  border: 1px solid #3b3e45;"
-        "  padding: 3px 6px;"
-        "  font-size: 11px;"
-        "}"
-        "QHeaderView::section:horizontal { text-align: left; }"
-        "QScrollBar:vertical, QScrollBar:horizontal {"
-        "  background-color: #2c2f34;"
-        "}"
-    );
+    setStyleSheet(ThemeManager::tableWidget());
+}
+
+void TableWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::tableWidget());
 }

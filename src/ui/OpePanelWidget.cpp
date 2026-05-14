@@ -21,6 +21,8 @@
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QStackedWidget>
+#include "ThemeManager.h"
+
 #include <QtGlobal>
 
 OpePanelWidget::OpePanelWidget(MainWindow* mainWindow, QWidget* parent)
@@ -89,19 +91,7 @@ void OpePanelWidget::initUI()
 
 void OpePanelWidget::initStyle()
 {
-    setStyleSheet(QString(
-        "QWidget {"
-        "    background-color: #2B2B2B;"
-        "    color: #F0F0F0;"
-        "}"
-        "QSplitter::handle {"
-        "    background-color: #2B2B2B;"
-        "    border-radius: 2px;"
-        "}"
-        "QSplitter::handle:hover {"
-        "    background-color: #353638;"
-        "}"
-    ));
+    setStyleSheet(ThemeManager::opePanel());
 }
 
 void OpePanelWidget::initConnections()
@@ -122,6 +112,10 @@ void OpePanelWidget::initConnections()
     connect(editorWidget, &EditorWidget::toggleDirectoryRequested, this, &OpePanelWidget::toggleDirectoryPanel);
     connect(editorWidget, &EditorWidget::sqlExecuted, terminalWidget, &TerminalWidget::appendCommand);
     connect(terminalWidget, &TerminalWidget::sqlSubmitted, editorWidget, &EditorWidget::executeSql);
+
+    connect(tableWidget, &TableWidget::backToEditorRequested, this, [this]() {
+        mainDisplayStackedWidget->setCurrentWidget(editorWidget);
+    });
 
     connect(activityBarWidget, &ActivityBarWidget::directoryPanelRequested, this, &OpePanelWidget::toggleDirectoryPanel);
     connect(activityBarWidget, &ActivityBarWidget::filePanelRequested, this, &OpePanelWidget::toggleFilePanel);
@@ -349,4 +343,15 @@ TerminalWidget* OpePanelWidget::getTerminalWidget() const
 QStackedWidget* OpePanelWidget::getMainDisplayStackedWidget() const
 {
     return mainDisplayStackedWidget;
+}
+
+void OpePanelWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::opePanel());
+    if (editorWidget) editorWidget->refreshTheme();
+    if (tableWidget) tableWidget->refreshTheme();
+    if (terminalWidget) terminalWidget->refreshTheme();
+    if (activityBarWidget) activityBarWidget->refreshTheme();
+    if (sidePanelContainer) sidePanelContainer->refreshTheme();
+    if (aiPanelWidget) aiPanelWidget->refreshTheme();
 }

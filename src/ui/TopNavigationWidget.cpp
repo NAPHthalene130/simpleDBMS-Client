@@ -7,6 +7,7 @@
  */
 
 #include "TopNavigationWidget.h"
+#include "ThemeManager.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -93,62 +94,7 @@ void TopNavigationWidget::initConnections()
 
 void TopNavigationWidget::initStyle()
 {
-    // 作者：YuzhSong
-    // 通过“选中标签底边与内容区同色”建立视觉连通，形成 IDE/浏览器标签页风格而非普通按钮风格。
-    setStyleSheet(QString(
-        "TopNavigationWidget {"
-        "    background-color: #111315;"
-        "}"
-        "QWidget {"
-        "    background-color: #111315;"
-        "    color: #F0F0F0;"
-        "    border: none;"
-        "}"
-        "QLabel#topNavBrandLabel {"
-        "    color: #F2F3F5;"
-        "    font-size: 14px;"
-        "    font-weight: 700;"
-        "    letter-spacing: 0;"
-        "}"
-        "QTabBar#topNavTabBar::tab {"
-        "    background-color: #111315;"
-        "    color: #A8A8A8;"
-        "    border: 1px solid #2F3136;"
-        "    border-bottom: 1px solid #111315;"
-        "    border-top-left-radius: 11px;"
-        "    border-top-right-radius: 11px;"
-        "    min-width: 70px;"
-        "    max-width: 70px;"
-        "    qproperty-alignment: AlignCenter;"
-        "    padding: 7px 15px;"
-        "    margin-right: 4px;"
-        "    font-size: 13px;"
-        "}"
-        "QTabBar#topNavTabBar::tab:hover {"
-        "    background-color: #111315;"
-        "    color: #E6E6E6;"
-        "}"
-        "QTabBar#topNavTabBar::tab:selected {"
-        "    background-color: #2B2B2B;"
-        "    border: 1px solid #1B1D20;"
-        "    border-bottom-color: #2B2B2B;"
-        "    color: #FFFFFF;"
-        "    font-weight: 700;"
-        "}"
-        "QLabel#topNavUserPrefixLabel {"
-        "    color: #A8A8A8;"
-        "    font-size: 12px;"
-        "}"
-        "QLabel#topNavUserValueLabel {"
-        "    color: #F0F0F0;"
-        "    font-size: 12px;"
-        "    font-weight: 600;"
-        "    background-color: #111315;"
-        "    border: 1px solid #3A3D42;"
-        "    border-radius: 6px;"
-        "    padding: 2px 8px;"
-        "}"
-    ));
+    setStyleSheet(ThemeManager::topNavigation());
 }
 
 void TopNavigationWidget::updateTabStyle()
@@ -171,4 +117,9 @@ void TopNavigationWidget::updateTabStyle()
     navigationTabBar->style()->unpolish(navigationTabBar);
     navigationTabBar->style()->polish(navigationTabBar);
     navigationTabBar->update();
+}
+
+void TopNavigationWidget::refreshTheme()
+{
+    setStyleSheet(ThemeManager::topNavigation());
 }

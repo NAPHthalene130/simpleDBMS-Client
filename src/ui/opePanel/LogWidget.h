@@ -43,6 +43,8 @@ public:
      */
     void appendLog(const QString& message);
 
+    void refreshTheme();
+
 private:
     /**
      * @brief 初始化界面
