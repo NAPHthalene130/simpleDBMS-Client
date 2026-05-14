@@ -142,19 +142,13 @@ void DirectoryWidget::loadMockDirectory()
 
 void DirectoryWidget::requestRefreshDirectory()
 {
-    // 作者：YuzhSong
-    // 先发出 refreshRequested 信号，让外部模块（例如 OpePanelWidget/网络层）感知“用户请求刷新”。
-    // 这里不直接请求服务端，避免把网络职责塞入目录控件内部。
+    /**
+     * @brief 响应 Refresh 按钮点击，请求重新获取服务端目录结构
+     * @details 仅发送信号通知外部模块发起网络请求，
+     *          目录信息由服务端 DIRECTORY_RESPONSE 回到 NetReceiver 后刷新。
+     * @author NAPH130
+     */
     emit refreshRequested();
-
-    // 作者：YuzhSong
-    // 当前阶段仅做占位行为：日志 + 模拟刷新，便于前端联调验证按钮交互。
-    qDebug() << "请求刷新数据库目录";
-
-    // 作者：YuzhSong
-    // TODO: 后续应由服务端返回真实数据库元数据后调用 refreshDirectory(...)。
-    //       当前为了保持演示效果，暂时沿用 loadMockDirectory()。
-    loadMockDirectory();
 }
 
 void DirectoryWidget::refreshDirectory(const QStringList& databaseNames)
