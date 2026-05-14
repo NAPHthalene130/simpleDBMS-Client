@@ -131,6 +131,13 @@ void OpePanelWidget::initConnections()
     connect(directoryWidget, &DirectoryWidget::columnActivated, this, [](const QString& db, const QString& table, const QString& column) {
         qDebug() << "[DirectoryWidget] columnActivated:" << db << table << column;
     });
+
+    // 作者：YuzhSong
+    // 连接目录刷新请求信号：当前阶段只做日志占位，后续这里可转发到服务端通信模块请求最新元数据。
+    // 边界说明：该连接不改动 SQL 编辑、文件管理、终端输出等既有核心业务逻辑。
+    connect(directoryWidget, &DirectoryWidget::refreshRequested, this, []() {
+        qDebug() << "收到数据库目录刷新请求，后续将转发给服务端模块。";
+    });
 }
 
 void OpePanelWidget::switchWidget(QWidget* widget)
