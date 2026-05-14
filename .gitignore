@@ -182,3 +182,5 @@ $RECYCLE.BIN/
 /build
 /build-vs
 /CMakeUserPresets.json
+.codex_tmp_docx/*
+.qwen/*
