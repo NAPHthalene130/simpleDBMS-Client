@@ -9,6 +9,9 @@
 #pragma once
 
 #include <QWidget>
+#include <vector>
+
+#include "models/network/NetworkTransferData.h"
 
 class MainWindow;
 class QSplitter;
@@ -37,6 +40,20 @@ public:
     TableWidget* getTableWidget() const;
     TerminalWidget* getTerminalWidget() const;
     QStackedWidget* getMainDisplayStackedWidget() const;
+
+    /**
+     * @brief 设置服务端目录数据
+     * @author Qi
+     * @param databases 服务端返回的数据库目录列表
+     */
+    void setDirectoryData(const std::vector<DatabaseNode> &databases);
+
+    /**
+     * @brief 获取缓存的目录数据
+     * @author Qi
+     * @return 数据库目录列表引用
+     */
+    const std::vector<DatabaseNode> &getDirectoryData() const;
 
     void refreshTheme();
 
@@ -87,5 +104,6 @@ private:
     QStackedWidget* mainDisplayStackedWidget;
     QSplitter* topHorizontalSplitter;
     QSplitter* rootVerticalSplitter;
+    std::vector<DatabaseNode> directoryData;
 };
 

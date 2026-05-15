@@ -143,6 +143,12 @@ public:
      */
     void applyGlobalSettings();
 
+    /**
+     * @brief 重启客户端
+     * @author Qi
+     */
+    void restartApplication();
+
 private:
     /**
      * @brief 初始化主窗口 UI 结构

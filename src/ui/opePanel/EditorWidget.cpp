@@ -19,6 +19,8 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -26,6 +28,7 @@
 #include <QKeySequence>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSettings>
@@ -48,6 +51,7 @@ EditorWidget::EditorWidget(MainWindow* mainWindow, QWidget* parent)
     , isInternalContentLoading(false)
 {
     initUI();
+    setAcceptDrops(true);
     setupEditor();
     setupToolbar();
     initConnections();
@@ -63,6 +67,19 @@ MainWindow* EditorWidget::getMainWindow() const
 void EditorWidget::reloadEditorSettingsFromLocal()
 {
     applyEditorSettingsFromLocal();
+}
+
+SqlEditor *EditorWidget::getSqlEditor() const
+{
+    return sqlEditor;
+}
+
+void EditorWidget::insertTextAtCursor(const QString &text)
+{
+    if (sqlEditor != nullptr) {
+        sqlEditor->insertPlainText(text);
+        sqlEditor->setFocus();
+    }
 }
 
 /**
@@ -104,6 +121,8 @@ void EditorWidget::initConnections()
     connect(saveShortcut, &QShortcut::activated, this, &EditorWidget::onSaveFile);
     auto* openShortcut = new QShortcut(QKeySequence("Ctrl+O"), this);
     connect(openShortcut, &QShortcut::activated, this, &EditorWidget::onOpenFile);
+    auto* findShortcut = new QShortcut(QKeySequence("Ctrl+F"), this);
+    connect(findShortcut, &QShortcut::activated, this, &EditorWidget::onFind);
 
     // 作者：YuzhSong
     // 仅监听文本变化更新文件状态，不修改 SqlEditor 自动补全、语法高亮、行号等内部逻辑。
@@ -167,6 +186,23 @@ void EditorWidget::onNewFile()
 void EditorWidget::onOpenFile() { openFile(); }
 void EditorWidget::onSaveFile() { saveFile(); }
 void EditorWidget::onSaveFileAs() { saveFileAs(); }
+
+void EditorWidget::onFind()
+{
+    if (!sqlEditor) return;
+    bool ok = false;
+    const QString searchText = QInputDialog::getText(this, tr("查找"),
+        tr("查找内容:"), QLineEdit::Normal, lastSearchText, &ok);
+    if (ok && !searchText.isEmpty()) {
+        lastSearchText = searchText;
+        if (!sqlEditor->find(searchText)) {
+            sqlEditor->moveCursor(QTextCursor::Start);
+            if (!sqlEditor->find(searchText)) {
+                QMessageBox::information(this, tr("查找"), tr("未找到 \"%1\"。").arg(searchText));
+            }
+        }
+    }
+}
 void EditorWidget::onRunSql() { runCurrentSql(); }
 
 bool EditorWidget::openFile()
@@ -194,6 +230,7 @@ bool EditorWidget::openFile()
     refreshCurrentFileTitle();
 
     emit fileOpened(openInfo.fileKey, openInfo.displayName, openInfo.isModified);
+
     emit currentFileChanged(openInfo.fileKey);
     return true;
 }
@@ -270,6 +307,17 @@ void EditorWidget::executeSql(const QString& sql)
                           .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
         return;
     }
+
+    // 提取 SELECT 目标表名供 TableWidget 编辑时使用
+    const QRegularExpression fromRegex("\\bFROM\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+                                       QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch fromMatch = fromRegex.match(trimmedSql);
+    if (fromMatch.hasMatch()) {
+        mainWindow->setProperty("lastQueryTable", fromMatch.captured(1));
+    } else {
+        mainWindow->setProperty("lastQueryTable", QString());
+    }
+    mainWindow->setProperty("lastExecutedSql", trimmedSql);
 
     NetworkManager* networkManager = mainWindow->getNetworkManager();
     if (networkManager == nullptr) return;
@@ -556,6 +604,43 @@ void EditorWidget::closeFileInternal(const QString& fileKey)
     const QString nextFileKey = openedFiles.firstKey();
     loadFileStateToEditor(nextFileKey);
     emit currentFileChanged(nextFileKey);
+}
+
+void EditorWidget::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        for (const QUrl &url : event->mimeData()->urls()) {
+            if (url.toLocalFile().endsWith(QStringLiteral(".sql"), Qt::CaseInsensitive)) {
+                event->acceptProposedAction();
+                return;
+            }
+        }
+    }
+}
+
+void EditorWidget::dropEvent(QDropEvent *event)
+{
+    for (const QUrl &url : event->mimeData()->urls()) {
+        const QString filePath = url.toLocalFile();
+        if (!filePath.endsWith(QStringLiteral(".sql"), Qt::CaseInsensitive)) continue;
+        const QString normalized = normalizeFilePath(filePath);
+        if (!QFileInfo::exists(normalized)) continue;
+
+        if (openedFiles.contains(normalized)) {
+            switchToFile(normalized);
+            return;
+        }
+        syncEditorToCurrentFileState();
+        if (!loadFile(normalized)) return;
+        OpenFileInfo openInfo{normalized, QFileInfo(normalized).fileName(), normalized, sqlEditor->toPlainText(), false, false};
+        openedFiles.insert(openInfo.fileKey, openInfo);
+        currentFileKey = openInfo.fileKey;
+        currentFilePath = openInfo.filePath;
+        refreshCurrentFileTitle();
+        emit fileOpened(openInfo.fileKey, openInfo.displayName, openInfo.isModified);
+        emit currentFileChanged(openInfo.fileKey);
+        return;
+    }
 }
 
 void EditorWidget::refreshTheme()

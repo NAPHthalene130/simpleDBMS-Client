@@ -106,6 +106,13 @@ signals:
     void tableActivated(const QString& databaseName, const QString& tableName);
 
     /**
+     * @brief 数据库节点激活信号
+     * @author Qi
+     * @param databaseName 数据库名
+     */
+    void databaseActivated(const QString& databaseName);
+
+    /**
      * @brief 字段节点激活信号
      * @details 用户双击字段节点时发出，用于后续接入列信息查看或 SQL 片段插入
      * @param databaseName 所属数据库名

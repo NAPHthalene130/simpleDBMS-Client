@@ -90,6 +90,13 @@ signals:
      */
     void settingsApplied();
 
+    /**
+     * @brief 请求重启客户端信号
+     * @author Qi
+     * @details 切换主题时用户选择立即重启后发出
+     */
+    void restartRequested();
+
 private slots:
     /**
      * @brief 处理分类切换
@@ -117,7 +124,9 @@ private:
     QSettings buildSettingsStorage() const;
     void loadSettingsToUi();
     void saveSettingsFromUi();
+    void saveSettingsFromUiExceptTheme();
     void resetUiToDefaults();
+    bool isThemeChanged() const;
 
     void setStatusMessage(const QString &message);
     QFrame *buildGroupCard(const QString &title, QLayout *contentLayout) const;
@@ -143,6 +152,7 @@ private:
     QCheckBox *keepEditorContentCheckBox;
     QCheckBox *dangerousSqlWarningCheckBox;
     QCheckBox *rememberWindowSizeCheckBox;
+    QCheckBox *rememberDatabaseCheckBox;
 
     QLabel *currentUserValueLabel;
     QLabel *connectionStatusValueLabel;

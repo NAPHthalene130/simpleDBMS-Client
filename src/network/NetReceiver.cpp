@@ -6,6 +6,7 @@
 
 #include <asio/read.hpp>
 #include <QMetaObject>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QStackedWidget>
 #include <QString>
@@ -188,6 +189,11 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
                                           [window = mainWindow, dbName]() {
                                               if (window != nullptr) {
                                                   window->setProperty("currentDatabase", dbName);
+                                                  QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+                                                  if (settings.value("habit/rememberDatabase", false).toBool()) {
+                                                      settings.setValue("session/lastDatabase", dbName);
+                                                      settings.sync();
+                                                  }
                                               }
                                           },
                                           Qt::QueuedConnection);
@@ -195,6 +201,22 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
             invokeTerminalAppend(
                 terminalWidget,
                 [msg](TerminalWidget *tw) { tw->appendMessage(msg); });
+
+            // 执行 DDL 后自动刷新目录
+            const QString lastSql = mainWindow->property("lastExecutedSql").toString();
+            if (!lastSql.isEmpty()) {
+                const QRegularExpression ddlRegex("\\b(CREATE|DROP|ALTER)\\b",
+                                                  QRegularExpression::CaseInsensitiveOption);
+                if (ddlRegex.match(lastSql).hasMatch()) {
+                    QMetaObject::invokeMethod(mainWindow,
+                                              [window = mainWindow]() {
+                                                  if (window != nullptr) {
+                                                      window->sendDirectoryRequest();
+                                                  }
+                                              },
+                                              Qt::QueuedConnection);
+                }
+            }
         } else {
             invokeTerminalAppend(
                 terminalWidget,
@@ -208,19 +230,28 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
         if (networkTransferData.getSuccess()) {
             const std::vector<std::string> columns = networkTransferData.getColumns();
             const std::vector<std::vector<std::string>> rows = networkTransferData.getRows();
+            const std::string responseDbName = networkTransferData.getDbName();
             QMetaObject::invokeMethod(
                 mainWindow,
-                [window = mainWindow, terminalWidget, text, columns, rows]() {
+                [window = mainWindow, terminalWidget, text, columns, rows, responseDbName]() {
                     if (window == nullptr) {
                         return;
                     }
+
+                    const QString tableName = window->property("lastQueryTable").toString();
+                    const QString dbName = responseDbName.empty()
+                        ? window->property("currentDatabase").toString()
+                        : QString::fromStdString(responseDbName);
 
                     OpePanelWidget *opePanelWidget = window->getOpePanelWidget();
                     if (opePanelWidget != nullptr) {
                         TableWidget *tableWidget = opePanelWidget->getTableWidget();
                         QStackedWidget *displayStack = opePanelWidget->getMainDisplayStackedWidget();
                         if (tableWidget != nullptr) {
-                            tableWidget->setQueryResult(columns, rows);
+                            tableWidget->setQueryResult(columns, rows,
+                                                        tableName.toStdString(),
+                                                        dbName.toStdString(),
+                                                        opePanelWidget->getDirectoryData());
                         }
                         const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
                         if (settings.value("habit/autoSwitchToTable", true).toBool()
@@ -333,6 +364,7 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
                 }
                 OpePanelWidget *opePanelWidget = window->getOpePanelWidget();
                 if (opePanelWidget != nullptr) {
+                    opePanelWidget->setDirectoryData(databases);
                     DirectoryWidget *directoryWidget = opePanelWidget->getDirectoryWidget();
                     if (directoryWidget != nullptr) {
                         directoryWidget->refreshFromServer(databases);

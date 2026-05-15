@@ -3,8 +3,10 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QFont>
+#include <QProcess>
 #include <QSettings>
 #include <QStackedWidget>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include "models/network/NetworkTransferData.h"
@@ -115,6 +117,24 @@ void MainWindow::showWorkspacePage()
     if (opePanelWidget != nullptr && opePanelWidget->getEditorWidget() != nullptr) {
         opePanelWidget->getEditorWidget()->reloadEditorSettingsFromLocal();
     }
+
+    sendDirectoryRequest();
+
+    const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
+    if (settings.value("habit/rememberDatabase", false).toBool()) {
+        const QString savedDb = settings.value("session/lastDatabase").toString();
+        if (!savedDb.isEmpty() && opePanelWidget != nullptr && opePanelWidget->getEditorWidget() != nullptr) {
+            QTimer::singleShot(500, this, [this, savedDb]() {
+                if (networkManager != nullptr && networkManager->getSocket() != nullptr
+                    && networkManager->getSocket()->is_open()
+                    && opePanelWidget != nullptr && opePanelWidget->getEditorWidget() != nullptr) {
+                    opePanelWidget->getEditorWidget()->executeSql(
+                        QString("USE DATABASE %1;").arg(savedDb));
+                }
+            });
+        }
+    }
+
     topNavigationWidget->setUserName(authWidget->getUserName());
     topNavigationWidget->setCurrentPage(TopNavigationWidget::PageType::Workspace);
 
@@ -220,6 +240,7 @@ void MainWindow::initConnections()
     connect(settingWidget, &SettingWidget::logoutRequested, this, &MainWindow::logout);
     connect(settingWidget, &SettingWidget::backToWorkspaceRequested, this, &MainWindow::showWorkspacePage);
     connect(settingWidget, &SettingWidget::settingsApplied, this, &MainWindow::applyGlobalSettings);
+    connect(settingWidget, &SettingWidget::restartRequested, this, &MainWindow::restartApplication);
 }
 
 void MainWindow::initStyle()
@@ -241,8 +262,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::applyGlobalSettings()
 {
-    qApp->setStyleSheet(ThemeManager::globalBase());
-
     const QSettings settings(QStringLiteral("simpleDBMS"), QStringLiteral("simpleDBMS-Client"));
     const int fontSize = settings.value("appearance/uiFontSize", QStringLiteral("14")).toString().toInt();
     if (fontSize > 0) {
@@ -285,4 +304,10 @@ void MainWindow::sendDirectoryRequest()
     }
     NetworkTransferData requestData(NetworkTransferData::DIRECTORY_REQUEST, std::string());
     nm->getNetSender()->send(serverSocket, requestData.toJson());
+}
+
+void MainWindow::restartApplication()
+{
+    QProcess::startDetached(QApplication::applicationFilePath(), QStringList());
+    QApplication::quit();
 }

@@ -13,6 +13,7 @@
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMenu>
 #include <QPushButton>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
@@ -73,6 +74,7 @@ void DirectoryWidget::initUI()
     // 保留原有目录树层级缩进策略，避免深层节点文本被挤出可视区域。
     directoryTree->setIndentation(12);
     directoryTree->header()->setStretchLastSection(true);
+    directoryTree->setContextMenuPolicy(Qt::CustomContextMenu);
 
     mainLayout->addLayout(topLayout);
     mainLayout->addWidget(directoryTree, 1);
@@ -80,15 +82,29 @@ void DirectoryWidget::initUI()
 
 void DirectoryWidget::initConnections()
 {
-    // 作者：YuzhSong
-    // 目录树节点双击只负责发出 table/column 激活信号，不直接耦合 SQL 编辑器逻辑。
     connect(directoryTree, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem* item, int) {
         handleItemDoubleClicked(item);
     });
 
-    // 作者：YuzhSong
-    // Refresh 按钮点击后进入 requestRefreshDirectory()。
-    // 该入口仅发信号并执行本地占位刷新，不直接发起网络请求，方便后续独立接入服务端模块。
+    connect(directoryTree, &QTreeWidget::customContextMenuRequested, this, [this](const QPoint &pos) {
+        QTreeWidgetItem *item = directoryTree->itemAt(pos);
+        if (item == nullptr) {
+            return;
+        }
+        const QString itemType = item->data(0, ItemTypeRole).toString();
+        const QString dbName = item->data(0, DbNameRole).toString();
+        const QString tableName = item->data(0, TableNameRole).toString();
+
+        if (itemType == QStringLiteral("table")) {
+            emit tableActivated(dbName, tableName);
+        } else if (itemType == QStringLiteral("column")) {
+            const QString columnName = item->text(0).section(':', 0, 0).trimmed();
+            emit columnActivated(dbName, tableName, columnName);
+        } else if (itemType == QStringLiteral("database")) {
+            emit databaseActivated(dbName);
+        }
+    });
+
     connect(refreshButton, &QPushButton::clicked, this, &DirectoryWidget::requestRefreshDirectory);
 }
 
@@ -142,19 +158,7 @@ void DirectoryWidget::loadMockDirectory()
 
 void DirectoryWidget::requestRefreshDirectory()
 {
-    // 作者：YuzhSong
-    // 先发出 refreshRequested 信号，让外部模块（例如 OpePanelWidget/网络层）感知“用户请求刷新”。
-    // 这里不直接请求服务端，避免把网络职责塞入目录控件内部。
     emit refreshRequested();
-
-    // 作者：YuzhSong
-    // 当前阶段仅做占位行为：日志 + 模拟刷新，便于前端联调验证按钮交互。
-    qDebug() << "请求刷新数据库目录";
-
-    // 作者：YuzhSong
-    // TODO: 后续应由服务端返回真实数据库元数据后调用 refreshDirectory(...)。
-    //       当前为了保持演示效果，暂时沿用 loadMockDirectory()。
-    loadMockDirectory();
 }
 
 void DirectoryWidget::refreshDirectory(const QStringList& databaseNames)
@@ -287,24 +291,7 @@ void DirectoryWidget::createTableNode(QTreeWidgetItem* tablesNode,
 
 void DirectoryWidget::handleItemDoubleClicked(QTreeWidgetItem* item)
 {
-    if (!item) {
-        return;
-    }
-
-    const QString itemType = item->data(0, ItemTypeRole).toString();
-    const QString dbName = item->data(0, DbNameRole).toString();
-    const QString tableName = item->data(0, TableNameRole).toString();
-
-    if (itemType == QStringLiteral("table")) {
-        emit tableActivated(dbName, tableName);
-        return;
-    }
-
-    if (itemType == QStringLiteral("column")) {
-        const QString columnText = item->text(0);
-        const QString columnName = columnText.section(':', 0, 0).trimmed();
-        emit columnActivated(dbName, tableName, columnName);
-    }
+    Q_UNUSED(item);
 }
 
 void DirectoryWidget::refreshTheme()

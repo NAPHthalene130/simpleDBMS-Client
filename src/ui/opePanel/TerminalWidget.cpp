@@ -6,6 +6,7 @@
 #include <QFontDatabase>
 #include <QHBoxLayout>
 #include <QLineEdit>
+#include <QPalette>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -112,4 +113,11 @@ void TerminalWidget::applyTerminalStyle()
 void TerminalWidget::refreshTheme()
 {
     applyTerminalStyle();
+
+    const bool dark = ThemeManager::isDark();
+    outputTextEdit->viewport()->setAutoFillBackground(true);
+    QPalette vpPal = outputTextEdit->viewport()->palette();
+    vpPal.setColor(QPalette::Base, dark ? QColor("#111315") : QColor("#F8F9FB"));
+    vpPal.setColor(QPalette::Text, dark ? QColor("#F0F0F0") : QColor("#1C1E21"));
+    outputTextEdit->viewport()->setPalette(vpPal);
 }
