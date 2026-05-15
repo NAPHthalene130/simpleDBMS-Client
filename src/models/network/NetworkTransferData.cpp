@@ -101,7 +101,7 @@ DatabaseNode DatabaseNode::fromJson(const std::string &jsonStr)
     return node;
 }
 
-const std::uint64_t &DatabaseNode::getDbVersion() const
+std::uint64_t DatabaseNode::getDbVersion() const
 {
     return dbVersion;
 }

@@ -15,8 +15,8 @@
 #include "network/NetworkManager.h"
 #include "network/NetSender.h"
 #include "models/network/NetworkTransferData.h"
-#include "OpePanelWidget.h"
-#include "DirectoryWidget.h"
+#include "ui/OpePanelWidget.h"
+#include "ui/opePanel/DirectoryWidget.h"
 
 #include <QDateTime>
 #include <QDebug>
