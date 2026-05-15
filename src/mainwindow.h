@@ -137,6 +137,14 @@ public:
     void sendDirectoryRequest();
 
     /**
+     * @brief 向服务端发送数据库版本号查询请求
+     * @author NAPH130
+     * @details 构造 DB_VERSION_REQUEST 协议消息并通过 NetSender 发送，服务端响应后
+     *          由 NetReceiver 更新 DirectoryWidget 本地版本缓存。
+     */
+    void sendDbVersionRequest();
+
+    /**
      * @brief 应用全局设置（主题/字号/缩放）
      * @author Qi
      * @details 从 QSettings 读取并即时应用主题、字号、缩放

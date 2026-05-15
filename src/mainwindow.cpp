@@ -286,3 +286,22 @@ void MainWindow::sendDirectoryRequest()
     NetworkTransferData requestData(NetworkTransferData::DIRECTORY_REQUEST, std::string());
     nm->getNetSender()->send(serverSocket, requestData.toJson());
 }
+
+/**
+ * @brief 向服务端发送数据库版本号查询请求
+ * @details 构造 DB_VERSION_REQUEST 消息并发送，获取所有数据库的当前版本号。
+ * @author NAPH130
+ */
+void MainWindow::sendDbVersionRequest()
+{
+    NetworkManager *nm = getNetworkManager();
+    if (nm == nullptr || nm->getNetSender() == nullptr) {
+        return;
+    }
+    auto serverSocket = nm->getSocket();
+    if (serverSocket == nullptr || !serverSocket->is_open()) {
+        return;
+    }
+    NetworkTransferData requestData(NetworkTransferData::DB_VERSION_REQUEST, std::string());
+    nm->getNetSender()->send(serverSocket, requestData.toJson());
+}
