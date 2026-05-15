@@ -181,21 +181,52 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
 
     if (networkTransferData.getType() == NetworkTransferData::SQL_EXEC_RESPONSE) {
         const QString msg = buildExecResultText(networkTransferData);
+        const std::uint64_t serverVersion = networkTransferData.getDbVersion();
+        const std::string dbName = networkTransferData.getDbName();
         if (networkTransferData.getSuccess()) {
-            if (!networkTransferData.getDbName().empty()) {
-                const QString dbName = QString::fromStdString(networkTransferData.getDbName());
+            const QString dbNameStr = QString::fromStdString(dbName);
+            if (!dbName.empty()) {
                 QMetaObject::invokeMethod(mainWindow,
-                                          [window = mainWindow, dbName]() {
-                                              if (window != nullptr) {
-                                                  window->setProperty("currentDatabase", dbName);
-                                              }
-                                          },
-                                          Qt::QueuedConnection);
+                    [window = mainWindow, dbNameStr]() {
+                        if (window != nullptr) {
+                            window->setProperty("currentDatabase", dbNameStr);
+                        }
+                    },
+                    Qt::QueuedConnection);
+            }
+            if (serverVersion > 0 && !dbNameStr.isEmpty()) {
+                QMetaObject::invokeMethod(mainWindow,
+                    [window = mainWindow, dbNameStr, serverVersion]() {
+                        if (window == nullptr) return;
+                        OpePanelWidget *ope = window->getOpePanelWidget();
+                        if (ope && ope->getDirectoryWidget()) {
+                            ope->getDirectoryWidget()->setDbVersion(dbNameStr, serverVersion);
+                        }
+                    },
+                    Qt::QueuedConnection);
             }
             invokeTerminalAppend(
                 terminalWidget,
                 [msg](TerminalWidget *tw) { tw->appendMessage(msg); });
         } else {
+            // 版本号不一致时的强制刷新
+            // 作者：NAPH130
+            if (serverVersion > 0 && !dbName.empty()) {
+                const QString dbNameStr = QString::fromStdString(dbName);
+                QMetaObject::invokeMethod(mainWindow,
+                    [window = mainWindow, dbNameStr, serverVersion]() {
+                        if (window == nullptr) return;
+                        OpePanelWidget *ope = window->getOpePanelWidget();
+                        if (ope && ope->getDirectoryWidget()) {
+                            ope->getDirectoryWidget()->setDbVersion(dbNameStr, serverVersion);
+                        }
+                        if (ope && ope->getTableWidget()) {
+                            ope->getTableWidget()->clearTable();
+                        }
+                        window->sendDirectoryRequest();
+                    },
+                    Qt::QueuedConnection);
+            }
             invokeTerminalAppend(
                 terminalWidget,
                 [msg](TerminalWidget *tw) { tw->appendError(msg); });
@@ -205,12 +236,15 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
 
     if (networkTransferData.getType() == NetworkTransferData::SQL_QUERY_RESPONSE) {
         const QString text = buildQueryResultText(networkTransferData);
+        const std::uint64_t serverVersion = networkTransferData.getDbVersion();
+        const std::string dbName = networkTransferData.getDbName();
+        const QString dbNameStr = QString::fromStdString(dbName);
         if (networkTransferData.getSuccess()) {
             const std::vector<std::string> columns = networkTransferData.getColumns();
             const std::vector<std::vector<std::string>> rows = networkTransferData.getRows();
             QMetaObject::invokeMethod(
                 mainWindow,
-                [window = mainWindow, terminalWidget, text, columns, rows]() {
+                [window = mainWindow, terminalWidget, text, columns, rows, dbNameStr, serverVersion]() {
                     if (window == nullptr) {
                         return;
                     }
@@ -232,9 +266,31 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
                     if (terminalWidget != nullptr) {
                         terminalWidget->appendMessage(text);
                     }
+
+                    if (serverVersion > 0 && !dbNameStr.isEmpty() && opePanelWidget != nullptr
+                        && opePanelWidget->getDirectoryWidget() != nullptr) {
+                        opePanelWidget->getDirectoryWidget()->setDbVersion(dbNameStr, serverVersion);
+                    }
                 },
                 Qt::QueuedConnection);
         } else {
+            // 查询失败的版本不一致处理
+            // 作者：NAPH130
+            if (serverVersion > 0 && !dbName.empty()) {
+                QMetaObject::invokeMethod(mainWindow,
+                    [window = mainWindow, dbNameStr, serverVersion]() {
+                        if (window == nullptr) return;
+                        OpePanelWidget *ope = window->getOpePanelWidget();
+                        if (ope && ope->getDirectoryWidget()) {
+                            ope->getDirectoryWidget()->setDbVersion(dbNameStr, serverVersion);
+                        }
+                        if (ope && ope->getTableWidget()) {
+                            ope->getTableWidget()->clearTable();
+                        }
+                        window->sendDirectoryRequest();
+                    },
+                    Qt::QueuedConnection);
+            }
             invokeTerminalAppend(
                 terminalWidget,
                 [text](TerminalWidget *tw) { tw->appendError(text); });
@@ -295,6 +351,28 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
                         ? QStringLiteral("验证成功 - ") + message
                         : QStringLiteral("验证失败 - ") + message;
                     authWidget->setConnectionStatus(displayMsg);
+                }
+            },
+            Qt::QueuedConnection);
+        return;
+    }
+
+    if (networkTransferData.getType() == NetworkTransferData::DB_VERSION_RESPONSE) {
+        /**
+         * @brief 处理服务端返回的数据库版本号数据
+         * @details 解析 databases 字段中每个 DatabaseNode 的 dbVersion，更新 DirectoryWidget 本地缓存。
+         * @author NAPH130
+         */
+        const auto databases = networkTransferData.getDatabases();
+        QMetaObject::invokeMethod(mainWindow,
+            [window = mainWindow, databases]() {
+                if (window == nullptr) return;
+                OpePanelWidget *ope = window->getOpePanelWidget();
+                if (ope && ope->getDirectoryWidget()) {
+                    for (const auto &db : databases) {
+                        ope->getDirectoryWidget()->setDbVersion(
+                            QString::fromStdString(db.getName()), db.getDbVersion());
+                    }
                 }
             },
             Qt::QueuedConnection);

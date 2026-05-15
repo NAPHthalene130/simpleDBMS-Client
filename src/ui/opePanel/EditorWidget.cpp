@@ -15,6 +15,8 @@
 #include "network/NetworkManager.h"
 #include "network/NetSender.h"
 #include "models/network/NetworkTransferData.h"
+#include "OpePanelWidget.h"
+#include "DirectoryWidget.h"
 
 #include <QDateTime>
 #include <QDebug>
@@ -281,6 +283,18 @@ void EditorWidget::executeSql(const QString& sql)
     NetworkTransferData data;
     data.setType(NetworkTransferData::SQL_EXEC_REQUEST);
     data.setSql(trimmedSql.toStdString());
+
+    // 携带当前数据库名与版本号
+    // 作者：NAPH130
+    const QString currentDbName = mainWindow->property("currentDatabase").toString();
+    if (!currentDbName.isEmpty()) {
+        data.setDbName(currentDbName.toStdString());
+        OpePanelWidget *opePanel = mainWindow->getOpePanelWidget();
+        if (opePanel != nullptr && opePanel->getDirectoryWidget() != nullptr) {
+            const std::uint64_t dbVersion = opePanel->getDirectoryWidget()->getDbVersion(currentDbName);
+            data.setDbVersion(dbVersion);
+        }
+    }
 
     netSender->send(socket, data.toJson());
 
