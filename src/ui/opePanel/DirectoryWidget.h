@@ -9,6 +9,8 @@
 #pragma once
 
 #include <QWidget>
+#include <QMap>
+#include <cstdint>
 #include <vector>
 
 class QLabel;
@@ -92,6 +94,22 @@ public:
      * @author NAPH130
      */
     void refreshFromServer(const std::vector<DatabaseNode>& databases);
+
+    /**
+     * @brief 获取指定数据库的版本号
+     * @param dbName 数据库名称
+     * @return 版本号，不存在时返回 0
+     * @author NAPH130
+     */
+    std::uint64_t getDbVersion(const QString& dbName) const;
+
+    /**
+     * @brief 设置指定数据库的版本号
+     * @param dbName 数据库名称
+     * @param version 版本号
+     * @author NAPH130
+     */
+    void setDbVersion(const QString& dbName, std::uint64_t version);
 
     void refreshTheme();
 
@@ -179,4 +197,5 @@ private:
     QLabel* titleLabel;          ///< 作者：YuzhSong，顶部标题标签（位于左侧）
     QPushButton* refreshButton;  ///< 作者：YuzhSong，顶部 Refresh 按钮（位于右侧）
     QTreeWidget* directoryTree;  ///< 数据库对象树控件
+    QMap<QString, std::uint64_t> dbVersionMap;  ///< 作者：NAPH130，数据库版本号映射表
 };

@@ -186,6 +186,7 @@ void DirectoryWidget::refreshDirectory(const QStringList& databaseNames)
 void DirectoryWidget::refreshFromServer(const std::vector<DatabaseNode>& databases)
 {
     clearDirectory();
+    dbVersionMap.clear();
 
     auto* rootNode = new QTreeWidgetItem(directoryTree);
     rootNode->setText(0, tr("simpleDBMS"));
@@ -197,6 +198,7 @@ void DirectoryWidget::refreshFromServer(const std::vector<DatabaseNode>& databas
 
     for (const DatabaseNode& databaseNode : databases) {
         const QString dbName = QString::fromStdString(databaseNode.getName());
+        dbVersionMap[dbName] = databaseNode.getDbVersion();
 
         QTreeWidgetItem* dbNode = createDatabaseNode(databasesNode, dbName);
         QTreeWidgetItem* tablesNode = dbNode->child(0);
@@ -215,6 +217,16 @@ void DirectoryWidget::refreshFromServer(const std::vector<DatabaseNode>& databas
 
     directoryTree->expandItem(rootNode);
     directoryTree->expandItem(databasesNode);
+}
+
+std::uint64_t DirectoryWidget::getDbVersion(const QString& dbName) const
+{
+    return dbVersionMap.value(dbName, 0);
+}
+
+void DirectoryWidget::setDbVersion(const QString& dbName, std::uint64_t version)
+{
+    dbVersionMap[dbName] = version;
 }
 
 QTreeWidgetItem* DirectoryWidget::createDatabaseNode(QTreeWidgetItem* root, const QString& databaseName)
