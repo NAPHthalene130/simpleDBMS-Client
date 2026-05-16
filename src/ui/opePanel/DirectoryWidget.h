@@ -141,6 +141,14 @@ signals:
     void columnActivated(const QString& databaseName, const QString& tableName, const QString& columnName);
 
     /**
+     * @brief 表查询请求信号（双击表节点时直接查询）
+     * @author Qi
+     * @param databaseName 所属数据库名
+     * @param tableName 表名
+     */
+    void tableQueryRequested(const QString& databaseName, const QString& tableName);
+
+    /**
      * @brief 刷新目录请求信号
      * @details
      * 1. 函数用途：把“用户请求刷新目录”的动作向外部模块广播。

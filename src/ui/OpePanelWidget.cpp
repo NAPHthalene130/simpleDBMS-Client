@@ -10,6 +10,7 @@
 
 #include "mainwindow.h"
 #include "models/network/NetworkTransferData.h"
+#include "network/NetworkManager.h"
 #include "opePanel/ActivityBarWidget.h"
 #include "opePanel/AiPanelWidget.h"
 #include "opePanel/DirectoryWidget.h"
@@ -138,6 +139,20 @@ void OpePanelWidget::initConnections()
     });
     connect(directoryWidget, &DirectoryWidget::columnActivated, this, [this](const QString& db, const QString& table, const QString& column) {
         editorWidget->insertTextAtCursor(column);
+    });
+
+    connect(directoryWidget, &DirectoryWidget::tableQueryRequested, this, [this](const QString& db, const QString& table) {
+        if (mainWindow == nullptr) return;
+        NetworkManager *nm = mainWindow->getNetworkManager();
+        if (nm == nullptr || nm->getNetSender() == nullptr) return;
+        auto socket = nm->getSocket();
+        if (socket == nullptr || !socket->is_open()) return;
+
+        NetworkTransferData data;
+        data.setType(NetworkTransferData::SQL_TEMP_EXEC_REQUEST);
+        data.setDbName(db.toStdString());
+        data.setSql(("SELECT * FROM " + table + ";").toStdString());
+        nm->getNetSender()->send(socket, data.toJson());
     });
 
     connect(directoryWidget, &DirectoryWidget::refreshRequested, this, [this]() {

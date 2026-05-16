@@ -309,7 +309,13 @@ void DirectoryWidget::createTableNode(QTreeWidgetItem* tablesNode,
 
 void DirectoryWidget::handleItemDoubleClicked(QTreeWidgetItem* item)
 {
-    Q_UNUSED(item);
+    if (!item) return;
+    const QString itemType = item->data(0, ItemTypeRole).toString();
+    const QString dbName = item->data(0, DbNameRole).toString();
+    const QString tableName = item->data(0, TableNameRole).toString();
+    if (itemType == QStringLiteral("table")) {
+        emit tableQueryRequested(dbName, tableName);
+    }
 }
 
 void DirectoryWidget::refreshTheme()

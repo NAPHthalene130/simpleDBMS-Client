@@ -329,6 +329,37 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
         return;
     }
 
+    if (networkTransferData.getType() == NetworkTransferData::SQL_TEMP_EXEC_RESPONSE) {
+        const QString text = buildQueryResultText(networkTransferData);
+        if (networkTransferData.getSuccess()) {
+            const auto columns = networkTransferData.getColumns();
+            const auto rows = networkTransferData.getRows();
+            QMetaObject::invokeMethod(mainWindow,
+                [window = mainWindow, terminalWidget, text, columns, rows]() {
+                    if (window == nullptr) return;
+                    OpePanelWidget *opePanel = window->getOpePanelWidget();
+                    if (opePanel != nullptr) {
+                        TableWidget *tw = opePanel->getTableWidget();
+                        QStackedWidget *ds = opePanel->getMainDisplayStackedWidget();
+                        if (tw != nullptr) {
+                            tw->setQueryResult(columns, rows);
+                        }
+                        if (ds != nullptr && tw != nullptr) {
+                            ds->setCurrentWidget(tw);
+                        }
+                    }
+                    if (terminalWidget != nullptr) {
+                        terminalWidget->appendMessage(text);
+                    }
+                },
+                Qt::QueuedConnection);
+        } else {
+            invokeTerminalAppend(terminalWidget,
+                [text](TerminalWidget *tw) { tw->appendError(text); });
+        }
+        return;
+    }
+
     if (networkTransferData.getType() == NetworkTransferData::LOGIN_RESPONSE) {
         /**
          * @brief 处理登录响应
