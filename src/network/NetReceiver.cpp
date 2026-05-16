@@ -455,6 +455,24 @@ void NetReceiver::processMsg(const NetworkTransferData &networkTransferData)
 
     if (networkTransferData.getType() == NetworkTransferData::ERROR_RESPONSE) {
         const QString msg = buildMessageText(networkTransferData);
+        const std::uint64_t serverVersion = networkTransferData.getDbVersion();
+        const std::string dbName = networkTransferData.getDbName();
+        const QString dbNameStr = QString::fromStdString(dbName);
+        if (serverVersion > 0 && !dbNameStr.isEmpty()) {
+            QMetaObject::invokeMethod(mainWindow,
+                [window = mainWindow, dbNameStr, serverVersion]() {
+                    if (window == nullptr) return;
+                    OpePanelWidget *ope = window->getOpePanelWidget();
+                    if (ope && ope->getDirectoryWidget()) {
+                        ope->getDirectoryWidget()->setDbVersion(dbNameStr, serverVersion);
+                    }
+                    if (ope && ope->getTableWidget()) {
+                        ope->getTableWidget()->clearTable();
+                    }
+                    window->sendDirectoryRequest();
+                },
+                Qt::QueuedConnection);
+        }
         invokeTerminalAppend(
             terminalWidget,
             [msg](TerminalWidget *tw) { tw->appendError(msg); });
