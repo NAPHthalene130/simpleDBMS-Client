@@ -23,6 +23,7 @@
 #include <QScrollBar>
 #include <QStringListModel>
 #include <QTextBlock>
+#include <QTimer>
 #include <QtGlobal>
 
 /**
@@ -154,7 +155,7 @@ void SqlEditor::setupCompleter()
                 << "DISTINCT" << "AS" << "IN" << "BETWEEN" << "LIKE" << "EXISTS"
                 << "UNION" << "ALL" << "ANY" << "SOME"
                 << "DATABASE" << "DATABASES" << "TABLES"
-                << "USE" << "PRIMARY" << "KEY" << "UNIQUE" << "DEFAULT";
+                << "USE" << "PRIMARY KEY" << "UNIQUE" << "DEFAULT" << "FOREIGN" << "REFERENCES";
     
     // 数据类型
     sqlKeywords << "INT" << "INTEGER" << "VARCHAR" << "CHAR" << "TEXT"
@@ -317,7 +318,7 @@ void SqlEditor::insertCompletion(const QString& completion)
     
     // 用完整的补全内容替换已输入的单词
     // 例如：将 "inse" 替换为 "INSERT"
-    cursor.insertText(completion);
+    cursor.insertText(completion + " ");
 }
 
 /**
@@ -366,17 +367,25 @@ void SqlEditor::triggerCompletion()
         QString completion = sqlCompleter->currentCompletion();
         if (sqlCompleter->completionCount() > 0 &&
             completion.toLower() != currentWord.toLower()) {
-            // 弹出补全框，位置为光标矩形区域
-            // 使用 cursorRect() 确保补全框出现在正确位置
             QRect cr = cursorRect();
-            // 调整补全框宽度，至少与当前单词长度匹配
             cr.setWidth(sqlCompleter->completionPrefix().length() * fontMetrics().horizontalAdvance('X') + 20);
             sqlCompleter->complete(cr);
+            QTimer::singleShot(0, [this]() {
+                if (sqlCompleter && sqlCompleter->popup()->isVisible()) {
+                    sqlCompleter->popup()->setCurrentIndex(
+                        sqlCompleter->popup()->model()->index(0, 0));
+                }
+            });
         } else if (sqlCompleter->completionCount() > 1) {
-            // 多个候选项时弹出补全框
             QRect cr = cursorRect();
             cr.setWidth(fontMetrics().horizontalAdvance(currentWord) + 20);
             sqlCompleter->complete(cr);
+            QTimer::singleShot(0, [this]() {
+                if (sqlCompleter && sqlCompleter->popup()->isVisible()) {
+                    sqlCompleter->popup()->setCurrentIndex(
+                        sqlCompleter->popup()->model()->index(0, 0));
+                }
+            });
         }
     }
 }
@@ -652,6 +661,45 @@ void SqlEditor::highlightCurrentLine()
         selection.cursor.clearSelection();
 
         extraSelections.append(selection);
+    }
+
+    // 括号匹配高亮
+    QTextCursor cursor = textCursor();
+    const QString fullText = toPlainText();
+    const int pos = cursor.position();
+    if (pos >= 0 && pos <= fullText.length()) {
+        // 检查光标前或光标处的括号
+        for (int offset = 0; offset <= 1; ++offset) {
+            const int checkPos = pos - offset;
+            if (checkPos < 0 || checkPos >= fullText.length()) continue;
+            const QChar ch = fullText.at(checkPos);
+            QChar openChar, closeChar;
+            int direction = 0;
+            if (ch == '(' || ch == '[' || ch == '{') { openChar = ch; closeChar = (ch == '(') ? ')' : (ch == '[') ? ']' : '}'; direction = 1; }
+            else if (ch == ')' || ch == ']' || ch == '}') { closeChar = ch; openChar = (ch == ')') ? '(' : (ch == ']') ? '[' : '{'; direction = -1; }
+            if (direction == 0) continue;
+
+            int depth = 0;
+            int matchPos = -1;
+            for (int i = checkPos; i >= 0 && i < fullText.length(); i += direction) {
+                if (fullText.at(i) == openChar) ++depth;
+                else if (fullText.at(i) == closeChar) --depth;
+                if (depth == 0) { matchPos = i; break; }
+            }
+            if (matchPos >= 0) {
+                QTextEdit::ExtraSelection sel;
+                sel.format.setBackground(QColor(ThemeManager::isDark() ? "#4A5568" : "#BBD3F5"));
+                sel.cursor = QTextCursor(document());
+                sel.cursor.setPosition(checkPos);
+                sel.cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, 1);
+                extraSelections.append(sel);
+                sel.cursor = QTextCursor(document());
+                sel.cursor.setPosition(matchPos);
+                sel.cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, 1);
+                extraSelections.append(sel);
+            }
+            break;
+        }
     }
 
     setExtraSelections(extraSelections);
