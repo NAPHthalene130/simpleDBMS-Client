@@ -17,6 +17,7 @@
 #include <QLabel>
 #include <QLayout>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QVBoxLayout>
@@ -39,6 +40,7 @@ SettingWidget::SettingWidget(MainWindow *mainWindow, QWidget *parent)
     , keepEditorContentCheckBox(new QCheckBox(tr("执行 SQL 后保留编辑器内容"), this))
     , dangerousSqlWarningCheckBox(new QCheckBox(tr("危险 SQL 提醒（DROP/DELETE/TRUNCATE）"), this))
     , rememberWindowSizeCheckBox(new QCheckBox(tr("记住上次窗口大小"), this))
+    , rememberDatabaseCheckBox(new QCheckBox(tr("记住上次使用的数据库"), this))
     , currentUserValueLabel(new QLabel(this))
     , connectionStatusValueLabel(new QLabel(this))
     , currentDatabaseValueLabel(new QLabel(this))
@@ -86,6 +88,23 @@ void SettingWidget::onCategoryChanged(int categoryIndex)
 
 void SettingWidget::onApplyButtonClicked()
 {
+    if (isThemeChanged()) {
+        QSettings oldSettings = buildSettingsStorage();
+        const QString oldTheme = oldSettings.value("appearance/theme", tr("深色")).toString();
+        const QMessageBox::StandardButton reply = QMessageBox::question(
+            this, tr("切换主题"),
+            tr("切换主题需要重启客户端才能生效。是否立即重启？"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+        if (reply == QMessageBox::Yes) {
+            saveSettingsFromUi();
+            emit restartRequested();
+            return;
+        }
+        saveSettingsFromUiExceptTheme();
+        themeComboBox->setCurrentText(oldTheme);
+        setStatusMessage(tr("已取消主题切换，其他设置已保存。"));
+        return;
+    }
     saveSettingsFromUi();
     setStatusMessage(tr("设置已保存到本地。"));
     emit settingsApplied();
@@ -93,6 +112,24 @@ void SettingWidget::onApplyButtonClicked()
 
 void SettingWidget::onOkButtonClicked()
 {
+    if (isThemeChanged()) {
+        QSettings oldSettings = buildSettingsStorage();
+        const QString oldTheme = oldSettings.value("appearance/theme", tr("深色")).toString();
+        const QMessageBox::StandardButton reply = QMessageBox::question(
+            this, tr("切换主题"),
+            tr("切换主题需要重启客户端才能生效。是否立即重启？"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+        if (reply == QMessageBox::Yes) {
+            saveSettingsFromUi();
+            emit restartRequested();
+            return;
+        }
+        saveSettingsFromUiExceptTheme();
+        themeComboBox->setCurrentText(oldTheme);
+        setStatusMessage(tr("已取消主题切换，其他设置已保存。"));
+        emit backToWorkspaceRequested();
+        return;
+    }
     saveSettingsFromUi();
     setStatusMessage(tr("设置已保存。"));
     emit settingsApplied();
@@ -214,7 +251,7 @@ QWidget *SettingWidget::buildAppearancePage()
     formLayout->addRow(tr("界面字号"), uiFontSizeComboBox);
     formLayout->addRow(tr("界面缩放"), uiScaleComboBox);
 
-    auto *noteLabel = new QLabel(tr("注：主题和缩放需点击“应用”后即时生效，字号影响全局控件文本大小。"), this);
+    auto *noteLabel = new QLabel(tr("注：切换主题需立即重启客户端，缩放需重启后生效。"), this);
     noteLabel->setObjectName("settingStatusLabel");
     noteLabel->setWordWrap(true);
 
@@ -262,6 +299,7 @@ QWidget *SettingWidget::buildHabitPage()
     habitLayout->addWidget(keepEditorContentCheckBox);
     habitLayout->addWidget(dangerousSqlWarningCheckBox);
     habitLayout->addWidget(rememberWindowSizeCheckBox);
+    habitLayout->addWidget(rememberDatabaseCheckBox);
     habitLayout->addStretch(1);
 
     pageLayout->addWidget(buildGroupCard(tr("使用习惯"), habitLayout));
@@ -323,6 +361,7 @@ void SettingWidget::loadSettingsToUi()
     keepEditorContentCheckBox->setChecked(settings.value("habit/keepEditorContent", true).toBool());
     dangerousSqlWarningCheckBox->setChecked(settings.value("habit/dangerousSqlWarning", true).toBool());
     rememberWindowSizeCheckBox->setChecked(settings.value("habit/rememberWindowSize", true).toBool());
+    rememberDatabaseCheckBox->setChecked(settings.value("habit/rememberDatabase", false).toBool());
 }
 
 void SettingWidget::saveSettingsFromUi()
@@ -342,6 +381,7 @@ void SettingWidget::saveSettingsFromUi()
     settings.setValue("habit/keepEditorContent", keepEditorContentCheckBox->isChecked());
     settings.setValue("habit/dangerousSqlWarning", dangerousSqlWarningCheckBox->isChecked());
     settings.setValue("habit/rememberWindowSize", rememberWindowSizeCheckBox->isChecked());
+    settings.setValue("habit/rememberDatabase", rememberDatabaseCheckBox->isChecked());
 
     settings.sync();
 }
@@ -361,11 +401,40 @@ void SettingWidget::resetUiToDefaults()
     keepEditorContentCheckBox->setChecked(true);
     dangerousSqlWarningCheckBox->setChecked(true);
     rememberWindowSizeCheckBox->setChecked(true);
+    rememberDatabaseCheckBox->setChecked(false);
+}
+
+void SettingWidget::saveSettingsFromUiExceptTheme()
+{
+    QSettings settings = buildSettingsStorage();
+
+    settings.setValue("appearance/uiFontSize", uiFontSizeComboBox->currentText());
+    settings.setValue("appearance/uiScale", uiScaleComboBox->currentText());
+
+    settings.setValue("editor/fontFamily", editorFontFamilyComboBox->currentText());
+    settings.setValue("editor/fontSize", editorFontSizeComboBox->currentText());
+    settings.setValue("editor/autoWrap", editorAutoWrapCheckBox->isChecked());
+    settings.setValue("editor/showLineNumber", editorShowLineNumberCheckBox->isChecked());
+
+    settings.setValue("habit/autoSwitchToTable", autoSwitchToTableCheckBox->isChecked());
+    settings.setValue("habit/keepEditorContent", keepEditorContentCheckBox->isChecked());
+    settings.setValue("habit/dangerousSqlWarning", dangerousSqlWarningCheckBox->isChecked());
+    settings.setValue("habit/rememberWindowSize", rememberWindowSizeCheckBox->isChecked());
+    settings.setValue("habit/rememberDatabase", rememberDatabaseCheckBox->isChecked());
+
+    settings.sync();
 }
 
 void SettingWidget::setStatusMessage(const QString &message)
 {
     statusLabel->setText(message);
+}
+
+bool SettingWidget::isThemeChanged() const
+{
+    QSettings settings = buildSettingsStorage();
+    const QString savedTheme = settings.value("appearance/theme", tr("深色")).toString();
+    return themeComboBox->currentText() != savedTheme;
 }
 
 QFrame *SettingWidget::buildGroupCard(const QString &title, QLayout *contentLayout) const

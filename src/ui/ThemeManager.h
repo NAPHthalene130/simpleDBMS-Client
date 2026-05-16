@@ -185,6 +185,10 @@ public:
                 "  border: 1px solid #4a4d54; border-radius: 4px; padding: 2px 10px; font-size: 11px; }"
                 "QPushButton#tableBackButton:hover { background-color: #4a4d54; color: #d3d6dc; }"
                 "QPushButton#tableBackButton:pressed { background-color: #50545c; }"
+                "QPushButton#tableSubmitButton { background-color: #2F6EC4; color: #FFFFFF;"
+                "  border: 1px solid #3A7AD0; border-radius: 4px; padding: 2px 12px; font-size: 11px; }"
+                "QPushButton#tableSubmitButton:hover { background-color: #3A7AD0; }"
+                "QPushButton#tableSubmitButton:pressed { background-color: #255A9E; }"
             );
         }
         return QStringLiteral(
@@ -203,6 +207,10 @@ public:
             "QPushButton#tableBackButton:hover { background-color: #E3E9F0; color: #1C1E21;"
             "  border-color: #3B71CA; }"
             "QPushButton#tableBackButton:pressed { background-color: #D0D7E2; }"
+            "QPushButton#tableSubmitButton { background-color: #3B71CA; color: #FFFFFF;"
+            "  border: 1px solid #3B71CA; border-radius: 4px; padding: 2px 12px; font-size: 11px; }"
+            "QPushButton#tableSubmitButton:hover { background-color: #4D82D6; }"
+            "QPushButton#tableSubmitButton:pressed { background-color: #2E5CAD; }"
         );
     }
 

@@ -9,6 +9,7 @@
 #include "OpePanelWidget.h"
 
 #include "mainwindow.h"
+#include "models/network/NetworkTransferData.h"
 #include "opePanel/ActivityBarWidget.h"
 #include "opePanel/AiPanelWidget.h"
 #include "opePanel/DirectoryWidget.h"
@@ -117,6 +118,7 @@ void OpePanelWidget::initConnections()
     connect(tableWidget, &TableWidget::backToEditorRequested, this, [this]() {
         mainDisplayStackedWidget->setCurrentWidget(editorWidget);
     });
+    connect(tableWidget, &TableWidget::sqlExecutionRequested, editorWidget, &EditorWidget::executeSql);
 
     connect(activityBarWidget, &ActivityBarWidget::directoryPanelRequested, this, &OpePanelWidget::toggleDirectoryPanel);
     connect(activityBarWidget, &ActivityBarWidget::filePanelRequested, this, &OpePanelWidget::toggleFilePanel);
@@ -126,20 +128,21 @@ void OpePanelWidget::initConnections()
 
     // 作者：YuzhSong
     // DirectoryWidget 的双击信号当前只做接口预留，后续接入 SQL 生成/表结构查看功能。
-    connect(directoryWidget, &DirectoryWidget::tableActivated, this, [](const QString& db, const QString& table) {
-        qDebug() << "[DirectoryWidget] tableActivated:" << db << table;
+    connect(directoryWidget, &DirectoryWidget::tableActivated, this, [this](const QString& db, const QString& table) {
+        const QString sql = QString("SELECT * FROM %1;").arg(table);
+        editorWidget->insertTextAtCursor(sql);
     });
-    connect(directoryWidget, &DirectoryWidget::columnActivated, this, [](const QString& db, const QString& table, const QString& column) {
-        qDebug() << "[DirectoryWidget] columnActivated:" << db << table << column;
+    connect(directoryWidget, &DirectoryWidget::databaseActivated, this, [this](const QString& db) {
+        const QString sql = QString("USE DATABASE %1;").arg(db);
+        editorWidget->insertTextAtCursor(sql);
+    });
+    connect(directoryWidget, &DirectoryWidget::columnActivated, this, [this](const QString& db, const QString& table, const QString& column) {
+        editorWidget->insertTextAtCursor(column);
     });
 
-    // 作者：YuzhSong
-    // 连接目录刷新请求信号：当前阶段只做日志占位，后续这里可转发到服务端通信模块请求最新元数据。
-    // 边界说明：该连接不改动 SQL 编辑、文件管理、终端输出等既有核心业务逻辑。
     connect(directoryWidget, &DirectoryWidget::refreshRequested, this, [this]() {
-        MainWindow *mw = getMainWindow();
-        if (mw != nullptr) {
-            mw->sendDirectoryRequest();
+        if (mainWindow != nullptr) {
+            mainWindow->sendDirectoryRequest();
         }
     });
 }
@@ -365,4 +368,14 @@ void OpePanelWidget::refreshTheme()
     if (activityBarWidget) activityBarWidget->refreshTheme();
     if (sidePanelContainer) sidePanelContainer->refreshTheme();
     if (aiPanelWidget) aiPanelWidget->refreshTheme();
+}
+
+void OpePanelWidget::setDirectoryData(const std::vector<DatabaseNode> &databases)
+{
+    directoryData = databases;
+}
+
+const std::vector<DatabaseNode> &OpePanelWidget::getDirectoryData() const
+{
+    return directoryData;
 }

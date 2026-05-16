@@ -52,6 +52,20 @@ public:
     void reloadEditorSettingsFromLocal();
 
     /**
+     * @brief 获取 SQL 编辑器控件指针
+     * @author Qi
+     * @return SqlEditor 指针
+     */
+    SqlEditor *getSqlEditor() const;
+
+    /**
+     * @brief 在编辑器当前光标位置插入文本
+     * @author Qi
+     * @param text 要插入的文本
+     */
+    void insertTextAtCursor(const QString &text);
+
+    /**
      * @brief 执行 SQL 语句入口
      * @details 当前仍只执行当前编辑区 SQL，不处理其他已打开文件。
      * @author YuzhSong
@@ -147,18 +161,13 @@ private slots:
      * @author YuzhSong
      */
     void onOpenFile();
-
-    /**
-     * @brief 保存文件槽函数
-     * @author YuzhSong
-     */
     void onSaveFile();
-
-    /**
-     * @brief 另存为槽函数
-     * @author YuzhSong
-     */
     void onSaveFileAs();
+    void onFind();
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
     /**
      * @brief 运行 SQL 槽函数
@@ -355,5 +364,6 @@ private:
     QMap<QString, OpenFileInfo> openedFiles;  ///< 已打开文件状态表，key 为 fileKey
     int untitledFileCounter;           ///< 未落盘文件自增计数器，保证临时 key 唯一
     bool isInternalContentLoading;     ///< 标记是否处于程序加载文本阶段，避免误判为用户修改
+    QString lastSearchText;            ///< 上次查找文本
 };
 
